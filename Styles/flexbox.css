@@ -1,0 +1,99 @@
+/* Global CSS Variables */
+:root {
+    --LandscapeTotalHeight: 100%;
+    --LandscapeColumnHeight: 45vw;
+    /* These three variables should add up to column height */
+    --LandscapeRow1Height: 5vw;
+    --LandscapeRow2Height: 33vw;
+    --LandscapeRow3Height: 7vw;
+    --LandscapeRow2And3Height: 40vw;
+    --LandscapeColumnRightPad: 2vw;
+  
+    --LandscapeBRDFPresetsHeight: 30vw;
+    --LandscapeInstructionsHeight: 15vw;
+  
+    --PortraitTotalHeight: 245vw;
+    --PortraitColumnHeight: 245vw;
+      /* These three variables should add up to column height */
+    --PortraitRow1Height: 10vw;
+    --PortraitRow2Height: 120vw;
+    --PortraitRow3Height: 120vw;
+ }
+
+html, body {
+    width: 100%;
+    height: var(--LandscapeTotalHeight);
+}
+
+canvas {
+    width: 100%;
+    height : 100%;
+}
+
+
+
+#GUI {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    /* height: 70%; */
+    top: 5%;
+    bottom: 5%;
+    left: 0;
+    right: 90%;
+
+    user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+}
+
+button {
+    min-width: 5em;
+    width: 100%;
+    height: 5em;
+
+    fill: rgba(0, 0, 0, 1.0);
+    font-family: "Roboto", Helvetica, sans-serif;
+
+    font-size: 1.0vw;
+    /* font-weight: 200; */
+
+    background-color: rgb(255, 255, 255);
+    border: none;
+    color: black;
+    /* padding: 15px 32px; */
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    /* font-size: 16px; */
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+
+    border-radius: 12px;
+    margin-top: 5%;
+}
+
+button:hover {
+    background-color: rgb(150, 150, 150);
+}
+
+@media screen and (orientation:portrait) {
+    #GUI {
+        right: 80%;
+    }
+    button {
+        margin-top: 0%;
+    }
+}
+
+@media screen and (orientation:landscape) {
+    
+}
+
+/* input {
+    width: 5em;
+    height: 5em;
+} */

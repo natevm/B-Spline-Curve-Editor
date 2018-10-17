@@ -1,0 +1,41 @@
+<html id="myvideo">
+    <header>
+    	<title>Bezier Curve Editor</title>
+    	<link rel="stylesheet" href="./Styles/reset.css">
+    	<link rel="stylesheet" href="./Styles/fonts.css">
+    	<link rel="stylesheet" href="./Styles/flexbox.css">
+    	<link rel="stylesheet" href="./Styles/colors.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
+    	<meta charset="utf-8"/>
+    </header>
+<body>
+    <canvas id="glCanvas"></canvas>
+    <div id=GUI>
+        <!-- <div id = "Menu"> -->
+            <!-- <button id="Help">Help</button> -->
+            <button id="newCurve" type="button">Add Curve</button>
+            <button id="Delete" type="button">Delete Handle</button>
+            <button id="DeleteCurve" type="button">Delete Curve</button>
+            <button id="HideControlPolygons" type="button">Toggle Control Polygons</button>
+            <button id="HideControlHandles" type="button">Toggle Control Handles</button>
+            <button id="HideCurves" type="button">Toggle Curves</button>
+            <button id="ToggleClosestMode" type="button">Add to Closest</button>
+            <button id="ToggleEndMode" type="button">Add to End</button>
+            <button id="ToggleFrontMode" type="button">Add to Front</button>
+            <button id="Save" type="button">Save Curve</button>
+            <button onclick="document.getElementById('UploadFile').click();">Upload Curve</button>
+            <input id="UploadFile" style="display:none;" type="file"/>
+            <button id="FullScreen">Full Screen</button>
+            <!-- <p class="text">Click and drag to move the camera.</p>
+            <p class="text">Double click to reset camera.</p>
+            <p class="text">Click and hold to add a control point.</p> -->
+        <!-- </div> -->
+    </div>
+</body>
+    <script src="./Scripts/jquery-3.3.1.js"></script>
+    <script src="./Scripts/hammer.min.js"></script>
+    <script src="./Scripts/gl-matrix.js"></script>
+    <script type="module" src="./Scripts/main.js"></script>
+</html>
