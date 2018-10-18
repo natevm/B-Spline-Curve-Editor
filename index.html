@@ -145,6 +145,13 @@
                                 View
                             </button>
                             <md-menu-content>
+                                <md-menu-item class="md-indent">
+                                    <md-button ng-click="ctrl.resetCamera($event)">
+                                        Reset Camera
+                                        <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-divider></md-menu-divider>
                                 <md-menu-item type="checkbox" ng-model="ctrl.settings.showControlPolygon" ng-click="ctrl.updateVisibility($event)">Show
                                     Control Polygon</md-menu-item>
                                 <md-menu-item type="checkbox" ng-model="ctrl.settings.showControlHandles" ng-click="ctrl.updateVisibility($event)">Show

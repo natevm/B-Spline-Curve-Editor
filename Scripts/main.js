@@ -222,6 +222,10 @@ angular
             }
         };
 
+        this.resetCamera = function(ev) {
+            curveEditor.resetCamera();
+        }
+
         this.save = function(ev) {
             // Function to download data to a file
             function download(data, filename, type) {

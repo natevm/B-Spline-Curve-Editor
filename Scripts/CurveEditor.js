@@ -56,18 +56,22 @@ class CurveEditor {
         });
 
         hammer.get('pan').set({
-            threshold: 0
+            threshold: 10
         });
 
         /* Pan */
         hammer.on('panstart', (e) => { 
             if (this.zooming) return;
+            console.log(e.center)
             this.panStart(
-                e.center.x / this.zoom - (this.gl.canvas.clientWidth / (2.0 * this.zoom)), 
-                e.center.y / this.zoom - (this.gl.canvas.clientHeight / (2.0 * this.zoom))); 
+                (e.changedPointers[0].clientX/this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
+                (e.changedPointers[0].clientY/this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom)),
+                e.deltaX/this.zoom, 
+                e.deltaY/this.zoom); 
             });
         hammer.on('pan', (e) => { 
             if (this.zooming) return;
+            console.log(e.center)
             this.pan(
                 (e.changedPointers[0].clientX/this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
                 (e.changedPointers[0].clientY/this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom)),
@@ -76,6 +80,7 @@ class CurveEditor {
         });
         hammer.on('panend', (e) => { 
             if (this.zooming) return;
+            console.log(e.center)
             this.panEnd(); });
 
         /* Press */
@@ -125,6 +130,7 @@ class CurveEditor {
         document.addEventListener('wheel', (e) => {
             if (e.deltaY < 0.0) {
                 this.zoom -= -e.deltaY * .001;
+                this.zoom = Math.max(this.zoom, .1);
             } else {
 
                 this.zoom += e.deltaY * .001;
@@ -150,18 +156,20 @@ class CurveEditor {
         }
     }
 
-    panStart(initialX, initialY) {
+    panStart(initialX, initialY, deltaX, deltaY) {
         this.panning = true;
-        // console.log(e)
+        console.log(deltaX)
         /* Check if we're moving a point */
         this.selectedHandle = -1;
         // this.selectedCurve = -1;
         for (var j = 0; j < this.curves.length; ++j) {
-            var ctl_idx = this.curves[j].getClickedHandle( initialX - this.position.x, initialY - this.position.y);
+            var ctl_idx = this.curves[j].getClickedHandle( (initialX - deltaX)- this.position.x, (initialY-deltaY) - this.position.y);
             if (ctl_idx != -1) {
-                console.log("Handle " + ctl_idx + " was pressed");
                 this.selectedHandle = ctl_idx;
+                if (this.selectedCurve != -1)
+                    this.curves[this.selectedCurve].deselect();
                 this.selectedCurve = j;
+                this.curves[j].select();
                 break;
             }
         }
@@ -235,7 +243,10 @@ class CurveEditor {
                     y - this.position.y)
                 if (ctl_idx != -1) {
                     this.curves[j].removeHandle(ctl_idx);
+                    if (this.selectedCurve != -1)
+                        this.curves[this.selectedCurve].deselect();
                     this.selectedCurve = j;
+                    this.curves[j].select();
                     return;
                 }
             }
@@ -290,7 +301,10 @@ class CurveEditor {
     /* Adds a new curve to the scene */
     newCurve() {
         this.curves.push(new Curve(-this.position.x, -this.position.y))
+        if (this.selectedCurve != -1)
+            this.curves[this.selectedCurve].deselect();
         this.selectedCurve = this.curves.length - 1;
+        this.curves[this.selectedCurve].select();
     }
 
     /* Deletes the last clicked handle */
@@ -346,6 +360,12 @@ class CurveEditor {
         for (var j = 0; j < this.curves.length; ++j) {
             this.curves[j].showCurve = this.showCurves;
         }
+    }
+
+    resetCamera() {
+        this.position = { x: 0, y: 0 };
+        this.originalPosition = { x: 0, y: 0 };
+        this.zoom = 0.5;
     }
 }
 

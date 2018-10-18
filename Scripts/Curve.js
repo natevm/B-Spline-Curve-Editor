@@ -78,7 +78,8 @@ class Curve {
                     modelView: gl.getUniformLocation(Curve.LineShaderProgram, 'modelView'),
                     thickness: gl.getUniformLocation(Curve.LineShaderProgram, 'thickness'),
                     aspect: gl.getUniformLocation(Curve.LineShaderProgram, 'aspect'),
-                    miter: gl.getUniformLocation(Curve.LineShaderProgram, 'miter')
+                    miter: gl.getUniformLocation(Curve.LineShaderProgram, 'miter'),
+                    color: gl.getUniformLocation(Curve.LineShaderProgram, 'color'),
                 },
             };
         });
@@ -136,11 +137,22 @@ class Curve {
             100.0 + x, y, 0.0,
         ];
 
-        this.handleRadius = 40;
-        this.handleThickness = 10.;
+        this.handleRadius = 80;
+        this.handleThickness = 20.;
         this.handleSamples = 30;
+        this.selected = false;
+        this.selectedColor = [1.0, 1.0, 1.0, 1.0];
+        this.deselectedColor = [.3, .3, .3, 1.0];
 
         this.updateBuffers();
+    }
+
+    select() {
+        this.selected = true;
+    }
+
+    deselect() {
+        this.selected = false;
     }
 
     updateBuffers() {
@@ -577,6 +589,10 @@ class Curve {
         gl.uniform1i(
             Curve.LineProgramInfo.uniformLocations.miter,
             0);
+        
+        gl.uniform4fv(
+            Curve.LineProgramInfo.uniformLocations.color,
+            this.selected ? this.selectedColor : this.deselectedColor);
 
         {
             const vertexCount = (this.handleSamples * 6) * (this.controlPoints.length / 3);
@@ -695,6 +711,10 @@ class Curve {
         gl.uniform1i(
             Curve.LineProgramInfo.uniformLocations.miter,
             1);
+        
+        gl.uniform4fv(
+            Curve.LineProgramInfo.uniformLocations.color,
+            this.selected ? this.selectedColor : this.deselectedColor);
 
         {
             const vertexCount = (this.controlPoints.length / 3) * 2;
