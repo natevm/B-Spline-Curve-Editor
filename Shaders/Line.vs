@@ -10,6 +10,7 @@ uniform float aspect;
 
 uniform float thickness;
 uniform int miter;
+uniform vec4 color;
 
 varying lowp vec4 vColor;
 // varying lowp vec3 vOffset;
@@ -53,5 +54,5 @@ void main() {
   gl_PointSize = 1.0;
 
   // vOffset = offset;
-  vColor = vec4(1.0, 1.0, 1.0, 1.0);
+  vColor = color;
 }
