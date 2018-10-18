@@ -100,7 +100,7 @@ angular
             .defaultIconSet('img/icons/sets/core-icons.svg', 24);
 
         $mdThemingProvider.definePalette('black', {
-            '50': '000000',
+            '50': '#222222', // Background color of bottom sheet
             '100': '111111',
             '200': '222222', // select
             '300': '333333', // primary/warn
@@ -145,12 +145,13 @@ angular
             }).join(separator);
         };
     })
-    .controller('DemoBasicCtrl', function DemoCtrl($mdDialog) {
+    .controller('DemoBasicCtrl', function DemoCtrl($mdDialog, $mdBottomSheet, $mdToast, $scope) {
         this.settings = {
             printLayout: true,
             showControlPolygon: true,
             showControlHandles: true,
             showCurve: true,
+            snappingEnabled: true,
             fullScreen: false,
             insertionMode: 'front',
             designName: "Untitled design"
@@ -164,6 +165,10 @@ angular
                 .targetEvent(ev)
             );
         };
+
+        this.updateSnapping = function (ev) {
+            curveEditor.setSnappingMode(this.settings.snappingEnabled);
+        }
 
         this.updateVisibility = function (ev) {
             curveEditor.setControlPolygonVisibility(this.settings.showControlPolygon);
@@ -308,4 +313,42 @@ angular
                 .targetEvent(ev)
             );
         };
-    });
+
+        $scope.openBottomSheet = function(ev) {
+            $scope.alert = '';
+            $mdBottomSheet.show({
+            templateUrl: 'bottom-sheet-grid-template.html',
+            controller: 'GridBottomSheetCtrl',
+            clickOutsideToClose: true
+            }).then(function(clickedItem) {
+            $mdToast.show(
+                    $mdToast.simple()
+                    .textContent(clickedItem['name'] + ' clicked!')
+                    .position('top right')
+                    .hideDelay(1500)
+                );
+            }).catch(function(error) {
+            // User clicked outside or hit escape
+            });
+          };
+        
+        this.closeBottomSheet = function(ev) {
+            $mdBottomSheet.hide();
+            console.log("closing");
+        }
+    })
+    .controller('GridBottomSheetCtrl', function($scope, $mdBottomSheet) {
+        // $scope.items = [
+        //   { name: 'Hangout', icon: 'hangout' },
+        //   { name: 'Mail', icon: 'mail' },
+        //   { name: 'Message', icon: 'message' },
+        //   { name: 'Copy', icon: 'copy2' },
+        //   { name: 'Facebook', icon: 'facebook' },
+        //   { name: 'Twitter', icon: 'twitter' },
+        // ];
+      
+        $scope.listItemClick = function() {
+        //   var clickedItem = $scope.items[$index];
+          $mdBottomSheet.hide("test");
+        };
+      });

@@ -1,4 +1,4 @@
-body {background-color: black;}
+body {background-color: #222222;}
 
 button {color: white}
 
@@ -8,10 +8,13 @@ button {color: white}
 
 p {color: white}
 
-h2 {color: white}
-
+h2, h4, div, span {color: white}
 
 /* Find a better way to do this... */
 md-input-container.md-default-theme .md-input, md-input-container .md-input {
+    color: white;
+}
+
+md-grid-item-content md-button md-ink-ripple {
     color: white;
 }

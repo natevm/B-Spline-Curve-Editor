@@ -18,6 +18,7 @@ class CurveEditor {
         this.addToFront = false;
         this.addToBack = false;
         this.addToClosest = true;
+        this.snappingEnabled = true;
         this.zooming = false;
         this.panning = false;
 
@@ -62,7 +63,6 @@ class CurveEditor {
         /* Pan */
         hammer.on('panstart', (e) => { 
             if (this.zooming) return;
-            console.log(e.center)
             this.panStart(
                 (e.changedPointers[0].clientX/this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
                 (e.changedPointers[0].clientY/this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom)),
@@ -71,7 +71,6 @@ class CurveEditor {
             });
         hammer.on('pan', (e) => { 
             if (this.zooming) return;
-            console.log(e.center)
             this.pan(
                 (e.changedPointers[0].clientX/this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
                 (e.changedPointers[0].clientY/this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom)),
@@ -80,7 +79,6 @@ class CurveEditor {
         });
         hammer.on('panend', (e) => { 
             if (this.zooming) return;
-            console.log(e.center)
             this.panEnd(); });
 
         /* Press */
@@ -110,6 +108,12 @@ class CurveEditor {
                            (e.center.y/this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom))); 
         });
         
+        /* tap */
+        hammer.on('tap', (e) => { 
+            this.tap((e.center.x/this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
+                           (e.center.y/this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom))); 
+        });
+
         /* Setup keyboard shortcuts */
         document.onkeyup = (e) => {
             console.log("The key code is: " + e.keyCode);
@@ -156,9 +160,24 @@ class CurveEditor {
         }
     }
 
+    tap(x, y) {
+        this.selectedHandle = -1;
+        for (var j = 0; j < this.curves.length; ++j) {
+            var ctl_idx = this.curves[j].getClickedHandle( x- this.position.x, y - this.position.y);
+            if (ctl_idx != -1) {
+                this.selectedHandle = ctl_idx;
+                if (this.selectedCurve != -1)
+                    this.curves[this.selectedCurve].deselect();
+                this.selectedCurve = j;
+                this.curves[j].select();
+                break;
+            }
+        }
+    }
+
     panStart(initialX, initialY, deltaX, deltaY) {
         this.panning = true;
-        console.log(deltaX)
+
         /* Check if we're moving a point */
         this.selectedHandle = -1;
         // this.selectedCurve = -1;
@@ -186,9 +205,29 @@ class CurveEditor {
             this.position.y = this.originalPosition.y + deltay;
         } else {
             this.pointJustAdded = false;
-            this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
-                x - this.position.x,
-                y - this.position.y);
+            
+            /* If snapping is on, see if we can place this point over another */
+            var handleUnderneath = -1;
+            var otherHandlePos = [0.0, 0.0, 0.0];
+            if (this.snappingEnabled) {
+                for (var j = 0; j < this.curves.length; ++j) {
+                    var ctl_idx = this.curves[j].getSnapPosition( x - this.position.x, y - this.position.y, this.selectedCurve == j, this.selectedHandle);
+                    if ( (ctl_idx != -1) && !( (j == this.selectedCurve) && (ctl_idx == this.selectedHandle) )) {
+                        handleUnderneath = ctl_idx;
+                        otherHandlePos = this.curves[j].getHandlePos(handleUnderneath);
+                        break;
+                    }
+                }
+            }
+
+            if (handleUnderneath != -1) {
+                this.curves[this.selectedCurve].moveHandle(this.selectedHandle, otherHandlePos[0], otherHandlePos[1]);
+            }
+            else {
+                this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
+                    x - this.position.x,
+                    y - this.position.y);
+            }
         }
     }
 
@@ -223,6 +262,10 @@ class CurveEditor {
                 return;
             }
         }
+    }
+
+    setSnappingMode(enabled) {
+        this.snappingEnabled = enabled;
     }
 
     setAddMode(addToFront, addToBack, addToClosest) {
@@ -292,9 +335,16 @@ class CurveEditor {
         const modelViewMatrix = mat4.create();
         mat4.translate(modelViewMatrix, modelViewMatrix, [this.position.x, this.position.y, -1.0]);
 
-        /* Now draw our curves */
+        /* Draw all unselected curves */
         for (let i = 0; i < this.curves.length; ++i) {
-            this.curves[i].draw(orthoMatrix, modelViewMatrix, aspect, now);
+            if (!this.curves[i].selected)
+                this.curves[i].draw(orthoMatrix, modelViewMatrix, aspect, now);
+        }
+
+        /* Draw all selected curves */
+        for (let i = 0; i < this.curves.length; ++i) {
+            if (this.curves[i].selected)
+                this.curves[i].draw(orthoMatrix, modelViewMatrix, aspect, now);
         }
     }
 

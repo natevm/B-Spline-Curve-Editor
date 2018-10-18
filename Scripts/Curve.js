@@ -138,11 +138,11 @@ class Curve {
         ];
 
         this.handleRadius = 80;
-        this.handleThickness = 20.;
+        this.handleThickness = 10.;
         this.handleSamples = 30;
         this.selected = false;
         this.selectedColor = [1.0, 1.0, 1.0, 1.0];
-        this.deselectedColor = [.3, .3, .3, 1.0];
+        this.deselectedColor = [.1, .1, .1, 1.0];
 
         this.updateBuffers();
     }
@@ -312,7 +312,20 @@ class Curve {
             var deltaX = x - this.controlPoints[3 * i + 0];
             var deltaY = y - this.controlPoints[3 * i + 1];
             var distSqrd = deltaX * deltaX + deltaY * deltaY;
-            if (distSqrd*.9 < (this.handleRadius * this.handleRadius))
+            if (distSqrd * .9 < (this.handleRadius * this.handleRadius))
+                return i;
+        }
+        return -1;
+    }
+
+    getSnapPosition(x, y, selectedIsCurrent, currentHandle) {
+        for (var i = 0; i < this.controlPoints.length / 3; ++i) {
+            if (selectedIsCurrent && currentHandle == i) continue;
+
+            var deltaX = x - this.controlPoints[3 * i + 0];
+            var deltaY = y - this.controlPoints[3 * i + 1];
+            var distSqrd = deltaX * deltaX + deltaY * deltaY;
+            if (distSqrd * .9 < (this.handleRadius * this.handleRadius))
                 return i;
         }
         return -1;
@@ -321,7 +334,6 @@ class Curve {
     moveHandle(handleIdx, x, y) {
         this.controlPoints[3 * handleIdx + 0] = x;
         this.controlPoints[3 * handleIdx + 1] = y;
-        console.log("Moving handle " + handleIdx + " to " + x + " " + y)
     }
 
     removeHandle(handleIdx) {
@@ -372,22 +384,26 @@ class Curve {
                 if (distanceToEnd <= closestDistance) {
                     this.controlPoints.unshift(x, y, 0.0);
                 } else {
-                    this.controlPoints.splice((closest+1) * 3,0, x, y, 0.0);
+                    this.controlPoints.splice((closest + 1) * 3, 0, x, y, 0.0);
                 }
             } else if (closest == ((this.controlPoints.length / 3) - 2)) {
                 var end = vec2.create();
                 vec2.set(end, this.controlPoints[this.controlPoints.length - 3], this.controlPoints[this.controlPoints.length - 2])
                 var distanceToEnd = vec2.distance(p, end);
-                if (distanceToEnd <= closestDistance ) {
+                if (distanceToEnd <= closestDistance) {
                     this.controlPoints.push(x, y, 0.0);
                 } else {
-                    this.controlPoints.splice((closest+1) * 3,0, x, y, 0.0);
+                    this.controlPoints.splice((closest + 1) * 3, 0, x, y, 0.0);
                 }
             } else {
                 this.controlPoints.splice((closest + 1) * 3, 0, x, y, 0.0);
             }
         }
 
+    }
+
+    getHandlePos(index) {
+        return [this.controlPoints[index * 3 + 0], this.controlPoints[index * 3 + 1], this.controlPoints[index * 3 + 2]]
     }
 
     bernstein(n, k, t) {
@@ -589,7 +605,7 @@ class Curve {
         gl.uniform1i(
             Curve.LineProgramInfo.uniformLocations.miter,
             0);
-        
+
         gl.uniform4fv(
             Curve.LineProgramInfo.uniformLocations.color,
             this.selected ? this.selectedColor : this.deselectedColor);
@@ -711,7 +727,7 @@ class Curve {
         gl.uniform1i(
             Curve.LineProgramInfo.uniformLocations.miter,
             1);
-        
+
         gl.uniform4fv(
             Curve.LineProgramInfo.uniformLocations.color,
             this.selected ? this.selectedColor : this.deselectedColor);
@@ -730,12 +746,12 @@ class Curve {
             this.drawControlPolygon(projection, modelView, aspect, time);
         }
 
-        if (this.showCurve) {
-            this.drawCurve(projection, modelView, aspect, time);
-        }
-
         if (this.showControlPoints) {
             this.drawControlPoints(projection, modelView, aspect, time);
+        }
+        
+        if (this.showCurve) {
+            this.drawCurve(projection, modelView, aspect, time);
         }
     }
 }
