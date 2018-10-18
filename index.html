@@ -1,41 +1,196 @@
-<html id="myvideo">
-    <header>
-    	<title>Bezier Curve Editor</title>
-    	<link rel="stylesheet" href="./Styles/reset.css">
-    	<link rel="stylesheet" href="./Styles/fonts.css">
-    	<link rel="stylesheet" href="./Styles/flexbox.css">
-    	<link rel="stylesheet" href="./Styles/colors.css">
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="mobile-web-app-capable" content="yes">
-    	<meta charset="utf-8"/>
-    </header>
-<body>
+<html id="editor">
+<header>
+    <title>Bezier Curve Editor</title>
+    <link rel="stylesheet" href="./Styles/reset.css">
+    <link rel="stylesheet" href="./Styles/fonts.css">
+    <link rel="stylesheet" href="./Styles/flexbox.css">
+    <link rel="stylesheet" href="./Styles/colors.css">
+    <link rel="stylesheet" href="./Styles/test.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta charset="utf-8" />
+
+    <!-- Angular Material style sheet -->
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.8/angular-material.css">
+</header>
+
+<body ng-app="BSplineEditor" md-theme-watch>
     <canvas id="glCanvas"></canvas>
-    <div id=GUI>
-        <!-- <div id = "Menu"> -->
-            <!-- <button id="Help">Help</button> -->
-            <button id="newCurve" type="button">Add Curve</button>
-            <button id="Delete" type="button">Delete Handle</button>
-            <button id="DeleteCurve" type="button">Delete Curve</button>
-            <button id="HideControlPolygons" type="button">Toggle Control Polygons</button>
-            <button id="HideControlHandles" type="button">Toggle Control Handles</button>
-            <button id="HideCurves" type="button">Toggle Curves</button>
-            <button id="ToggleClosestMode" type="button">Add to Closest</button>
-            <button id="ToggleEndMode" type="button">Add to End</button>
-            <button id="ToggleFrontMode" type="button">Add to Front</button>
-            <button id="Save" type="button">Save Curve</button>
-            <button onclick="document.getElementById('UploadFile').click();">Upload Curve</button>
-            <input id="UploadFile" style="display:none;" type="file"/>
-            <button id="FullScreen">Full Screen</button>
-            <!-- <p class="text">Click and drag to move the camera.</p>
-            <p class="text">Double click to reset camera.</p>
-            <p class="text">Click and hold to add a control point.</p> -->
-        <!-- </div> -->
+
+    <div id="Menu" ng-controller="DemoBasicCtrl as ctrl" ng-cloak="" md-theme="{{ dynamicTheme }}" class="menuBardemoBasicUsage">
+        <md-toolbar class="md-menu-toolbar">
+            <div layout="row">
+                <div>
+                    <h2 class="md-toolbar-tools">B-Spline Editor</h2>
+                    <md-menu-bar>
+                        <md-menu>
+                            <button ng-click="$mdMenu.open()">
+                                File
+                            </button>
+                            <md-menu-content>
+                                <md-menu-item>
+                                    <md-button disabled="disabled" ng-click="ctrl.sampleAction('share', $event)">
+                                        Share...
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-divider></md-menu-divider>
+                                <md-menu-item>
+                                    <md-menu>
+                                        <md-button ng-click="$mdMenu.open()">New</md-button>
+                                        <md-menu-content>
+                                            <md-menu-item>
+                                                <md-button ng-click="ctrl.sampleAction('New Document', $event)">Document</md-button>
+                                            </md-menu-item>
+                                            <md-menu-item>
+                                                <md-button ng-click="ctrl.sampleAction('New Spreadsheet', $event)">Spreadsheet</md-button>
+                                            </md-menu-item>
+                                            <md-menu-item>
+                                                <md-button ng-click="ctrl.sampleAction('New Presentation', $event)">Presentation</md-button>
+                                            </md-menu-item>
+                                            <md-menu-item>
+                                                <md-button ng-click="ctrl.sampleAction('New Form', $event)">Form</md-button>
+                                            </md-menu-item>
+                                            <md-menu-item>
+                                                <md-button ng-click="ctrl.sampleAction('New Drawing', $event)">Drawing</md-button>
+                                            </md-menu-item>
+                                        </md-menu-content>
+                                    </md-menu>
+                                </md-menu-item>
+                                <md-menu-item>
+                                    <md-button onclick="document.getElementById('UploadFile').click();">
+                                        Open...
+                                        <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span>
+                                    </md-button>
+                                    <input class="ng-hide" id="UploadFile" type="file" />
+                                </md-menu-item>
+                                <md-menu-item>
+                                    <md-button ng-click="ctrl.save($event)">
+                                        Save
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-divider></md-menu-divider>
+                                <md-menu-item>
+                                    <md-button ng-click="ctrl.sampleAction('Print', $event)">
+                                        Print
+                                        <span class="md-alt-text">{{ 'M-P' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                            </md-menu-content>
+                        </md-menu>
+                        <md-menu>
+                            <button ng-click="$mdMenu.open()">
+                                Edit
+                            </button>
+                            <md-menu-content>
+                                <md-menu-item class="md-indent">
+                                    <md-icon md-svg-icon="undo"></md-icon>
+                                    <md-button disabled="disabled" ng-click="ctrl.sampleAction('undo', $event)">
+                                        Undo
+                                        <span class="md-alt-text">{{ 'M-Z' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-item disabled="disabled" class="md-indent">
+                                    <md-icon md-svg-icon="redo"></md-icon>
+                                    <md-button ng-click="ctrl.sampleAction('redo', $event)">
+                                        Redo
+                                        <span class="md-alt-text">{{ 'M-Y' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-divider></md-menu-divider>
+                                <md-menu-item class="md-indent">
+                                    <md-icon disabled="disabled" md-svg-icon="content-cut"></md-icon>
+                                    <md-button ng-click="ctrl.sampleAction('cut', $event)">
+                                        Cut
+                                        <span class="md-alt-text">{{ 'M-X' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-item class="md-indent">
+                                    <md-icon md-svg-icon="content-copy"></md-icon>
+                                    <md-button disabled="disabled" ng-click="ctrl.sampleAction('copy', $event)">
+                                        Copy
+                                        <span class="md-alt-text">{{ 'M-C' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-item class="md-indent">
+                                    <md-icon md-svg-icon="content-paste"></md-icon>
+                                    <md-button disabled="disabled" ng-click="ctrl.sampleAction('paste', $event)">
+                                        Paste
+                                        <span class="md-alt-text">{{ 'M-P' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-divider></md-menu-divider>
+                                <md-menu-item class="md-indent">
+                                    <md-button ng-click="ctrl.addCurve($event)">
+                                        Add Curve
+                                        <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-item class="md-indent">
+                                    <md-button ng-click="ctrl.deleteCurve($event)">
+                                        Delete Curve
+                                        <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-item class="md-indent">
+                                    <md-button ng-click="ctrl.deleteLastHandle($event)">
+                                        Delete Last Handle
+                                        <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span>
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-divider></md-menu-divider>
+                                <md-menu>
+                                    <md-button class="button-override" ng-click="$mdMenu.open()">Insertion Mode</md-button>
+                                    <md-menu-content width="3">
+                                        <md-menu-item type="radio" ng-model="ctrl.settings.insertionMode" ng-click="ctrl.updateInsertionMode($event)"
+                                            value="front">Add to Front</md-menu-item>
+                                        <md-menu-item type="radio" ng-model="ctrl.settings.insertionMode" ng-click="ctrl.updateInsertionMode($event)"
+                                            value="back">Add to Back</md-menu-item>
+                                        <md-menu-item type="radio" ng-model="ctrl.settings.insertionMode" ng-click="ctrl.updateInsertionMode($event)"
+                                            value="closest">Add to Closest</md-menu-item>
+                                    </md-menu-content>
+                                </md-menu>
+                            </md-menu-content>
+                        </md-menu>
+                        <md-menu>
+                            <button ng-click="$mdMenu.open()">
+                                View
+                            </button>
+                            <md-menu-content>
+                                <md-menu-item type="checkbox" ng-model="ctrl.settings.showControlPolygon" ng-click="ctrl.updateVisibility($event)">Show
+                                    Control Polygon</md-menu-item>
+                                <md-menu-item type="checkbox" ng-model="ctrl.settings.showControlHandles" ng-click="ctrl.updateVisibility($event)">Show
+                                    Control Handles</md-menu-item>
+                                <md-menu-item type="checkbox" ng-model="ctrl.settings.showCurve" ng-click="ctrl.updateVisibility($event)">Show
+                                    Curve</md-menu-item>
+                                <md-menu-divider></md-menu-divider>
+                                <md-menu-item type="checkbox" ng-model="ctrl.settings.fullScreen" ng-click="ctrl.toggleFullScreen($event)"
+                                    nv>Full screen</md-menu-item>
+                            </md-menu-content>
+                        </md-menu>
+                    </md-menu-bar>
+                </div>
+            </div>
+        </md-toolbar>
     </div>
-</body>
+
+    <!-- Angular Material requires Angular.js Libraries -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-animate.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-aria.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-messages.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-route.js"></script>
+
+
+    <!-- Angular Material Library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.8/angular-material.js"></script>
+
+
     <script src="./Scripts/jquery-3.3.1.js"></script>
     <script src="./Scripts/hammer.min.js"></script>
     <script src="./Scripts/gl-matrix.js"></script>
     <script type="module" src="./Scripts/main.js"></script>
+
+</body>
+
 </html>

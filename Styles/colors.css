@@ -1,1 +1,11 @@
 body {background-color: black;}
+
+button {color: white}
+
+.button-override.md-button {
+    color:white
+}
+
+p {color: white}
+
+h2 {color: white}
