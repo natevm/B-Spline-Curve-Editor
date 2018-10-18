@@ -120,10 +120,10 @@ class CurveEditor {
 
         document.addEventListener('wheel', (e) => {
             if (e.deltaY < 0.0) {
-                this.zoom /= -e.deltaY * .01;
+                this.zoom -= -e.deltaY * .001;
             } else {
 
-                this.zoom *= e.deltaY * .01;
+                this.zoom += e.deltaY * .001;
             }
             console.log(e);
             }, { capture: false, passive: true})
@@ -319,25 +319,22 @@ class CurveEditor {
         }
     }
 
-    /* Hides the control polygon connecting the curve handles */
-    hideControlPolygons() {
-        this.showControlPolygons = !this.showControlPolygons;
+    setControlPolygonVisibility(visible) {
+        this.showControlPolygons = visible;
         for (var j = 0; j < this.curves.length; ++j) {
             this.curves[j].showControlPolygon = this.showControlPolygons;
         }
     }
 
-    /* Hides the handles which deform the curves */
-    hideControlHandles() {
-        this.showControlHandles = !this.showControlHandles;
+    setControlHandleVisibility(visible) {
+        this.showControlHandles = visible;
         for (var j = 0; j < this.curves.length; ++j) {
             this.curves[j].showControlPoints = this.showControlHandles;
         }
     }
 
-    /* Hide the generated curves */
-    hideCurves() {
-        this.showCurves = !this.showCurves;
+    setCurveVisibility(visible) {
+        this.showCurves = visible;
         for (var j = 0; j < this.curves.length; ++j) {
             this.curves[j].showCurve = this.showCurves;
         }
