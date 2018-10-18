@@ -9,3 +9,9 @@ button {color: white}
 p {color: white}
 
 h2 {color: white}
+
+
+/* Find a better way to do this... */
+md-input-container.md-default-theme .md-input, md-input-container .md-input {
+    color: white;
+}

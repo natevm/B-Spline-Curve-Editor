@@ -94,7 +94,7 @@ window.onresize = function () {
 };
 
 angular
-    .module('BSplineEditor', ['ngMaterial', 'ngMessages'])
+    .module('BSplineEditor', ['ngMaterial', 'ngMessages', 'ngSanitize'])
     .config(function ($mdIconProvider, $mdThemingProvider) {
         $mdIconProvider
             .defaultIconSet('img/icons/sets/core-icons.svg', 24);
@@ -152,7 +152,8 @@ angular
             showControlHandles: true,
             showCurve: true,
             fullScreen: false,
-            insertionMode: 'front'
+            insertionMode: 'front',
+            designName: "Untitled design"
         };
 
         this.sampleAction = function (name, ev) {
@@ -171,6 +172,7 @@ angular
         };
 
         this.addCurve = function(ev) {
+            console.log(ev);
             curveEditor.newCurve()
         };
 
@@ -249,6 +251,57 @@ angular
                     text += curveEditor.curves[i].controlPoints[j * 3 + 1] / -50.0 + "\n"
                 }
             }
-            download(text, "Curve.dat", "text");
+            download(text, this.settings.designName + ".dat", "text");
+        };
+
+        this.renameDesign = function(ev) {
+            // Appending dialog to document.body to cover sidenav in docs app
+            var confirm = $mdDialog.prompt()
+            .title('What would you like to rename your design?')
+            // .textContent('Bowser is a common name.')
+            .placeholder('Design name')
+            .ariaLabel('Design name')
+            .initialValue('Untitled design')
+            .targetEvent(ev)
+            .required(true)
+            .ok('Rename')
+            .cancel('Cancel');
+
+            $mdDialog.show(confirm).then((result) => {
+            this.settings.designName = result;
+            }, ()  => {
+            console.log('Rename canceled');
+            });
+        };
+
+        this.newDesign = function(ev) {
+            // Appending dialog to document.body to cover sidenav in docs app
+            var confirm = $mdDialog.prompt()
+                .title('What would you like to call your design?')
+                .textContent('WARNING: This will delete any unsaved progress')
+                .placeholder('Design name')
+                .ariaLabel('Design name')
+                .initialValue('Untitled design')
+                .targetEvent(ev)
+                .required(true)
+                .ok('Create')
+                .cancel('Cancel');
+
+            $mdDialog.show(confirm).then((result) => {
+                this.settings.designName = result;
+                curveEditor.deleteAll();
+            }, ()  => {
+                console.log('New design canceled');
+            });
+        };
+
+        this.showHelp = function(ev) {
+            $mdDialog.show($mdDialog.alert()
+                .title("Help")
+                .clickOutsideToClose(true)
+                .htmlContent('<p>Click and hold to create/remove a control handle. <\p>  <p>Click and drag to move the camera. <\p> <p> Scroll to zoom. <\p> <p>Curves can be added or removed from the \"Edit\" menu.<\p> ')
+                .ok('Close')
+                .targetEvent(ev)
+            );
         };
     });

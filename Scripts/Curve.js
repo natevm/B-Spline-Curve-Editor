@@ -300,7 +300,7 @@ class Curve {
             var deltaX = x - this.controlPoints[3 * i + 0];
             var deltaY = y - this.controlPoints[3 * i + 1];
             var distSqrd = deltaX * deltaX + deltaY * deltaY;
-            if (distSqrd < (this.handleRadius * this.handleRadius))
+            if (distSqrd*.9 < (this.handleRadius * this.handleRadius))
                 return i;
         }
         return -1;

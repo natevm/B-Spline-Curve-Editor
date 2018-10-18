@@ -21,9 +21,9 @@
     <div id="Menu" ng-controller="DemoBasicCtrl as ctrl" ng-cloak="" md-theme="{{ dynamicTheme }}" class="menuBardemoBasicUsage">
         <md-toolbar class="md-menu-toolbar">
             <div layout="row">
-                <div>
-                    <h2 class="md-toolbar-tools">B-Spline Editor</h2>
-                    <md-menu-bar>
+                <div style="width: 100%;">
+                    <h2 class="md-toolbar-tools">{{ ctrl.settings.designName }}</h2>
+                    <md-menu-bar style="display: flex;">
                         <md-menu>
                             <button ng-click="$mdMenu.open()">
                                 File
@@ -36,42 +36,30 @@
                                 </md-menu-item>
                                 <md-menu-divider></md-menu-divider>
                                 <md-menu-item>
-                                    <md-menu>
-                                        <md-button ng-click="$mdMenu.open()">New</md-button>
-                                        <md-menu-content>
-                                            <md-menu-item>
-                                                <md-button ng-click="ctrl.sampleAction('New Document', $event)">Document</md-button>
-                                            </md-menu-item>
-                                            <md-menu-item>
-                                                <md-button ng-click="ctrl.sampleAction('New Spreadsheet', $event)">Spreadsheet</md-button>
-                                            </md-menu-item>
-                                            <md-menu-item>
-                                                <md-button ng-click="ctrl.sampleAction('New Presentation', $event)">Presentation</md-button>
-                                            </md-menu-item>
-                                            <md-menu-item>
-                                                <md-button ng-click="ctrl.sampleAction('New Form', $event)">Form</md-button>
-                                            </md-menu-item>
-                                            <md-menu-item>
-                                                <md-button ng-click="ctrl.sampleAction('New Drawing', $event)">Drawing</md-button>
-                                            </md-menu-item>
-                                        </md-menu-content>
-                                    </md-menu>
+                                    <md-button ng-click="ctrl.newDesign($event)">
+                                        New Design
+                                    </md-button>
+                                </md-menu-item>
+                                <md-menu-item>
+                                    <md-button ng-click="ctrl.renameDesign($event)">
+                                        Rename Design
+                                    </md-button>
                                 </md-menu-item>
                                 <md-menu-item>
                                     <md-button onclick="document.getElementById('UploadFile').click();">
-                                        Open...
+                                        Import Design...
                                         <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span>
                                     </md-button>
                                     <input class="ng-hide" id="UploadFile" type="file" />
                                 </md-menu-item>
                                 <md-menu-item>
                                     <md-button ng-click="ctrl.save($event)">
-                                        Save
+                                        Save Design
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-divider></md-menu-divider>
                                 <md-menu-item>
-                                    <md-button ng-click="ctrl.sampleAction('Print', $event)">
+                                    <md-button disabled="disabled" ng-click="ctrl.sampleAction('Print', $event)">
                                         Print
                                         <span class="md-alt-text">{{ 'M-P' | keyboardShortcut }}</span>
                                     </md-button>
@@ -90,17 +78,17 @@
                                         <span class="md-alt-text">{{ 'M-Z' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
-                                <md-menu-item disabled="disabled" class="md-indent">
+                                <md-menu-item class="md-indent">
                                     <md-icon md-svg-icon="redo"></md-icon>
-                                    <md-button ng-click="ctrl.sampleAction('redo', $event)">
+                                    <md-button disabled="disabled" ng-click="ctrl.sampleAction('redo', $event)">
                                         Redo
                                         <span class="md-alt-text">{{ 'M-Y' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-divider></md-menu-divider>
                                 <md-menu-item class="md-indent">
-                                    <md-icon disabled="disabled" md-svg-icon="content-cut"></md-icon>
-                                    <md-button ng-click="ctrl.sampleAction('cut', $event)">
+                                    <md-icon md-svg-icon="content-cut"></md-icon>
+                                    <md-button disabled="disabled" ng-click="ctrl.sampleAction('cut', $event)">
                                         Cut
                                         <span class="md-alt-text">{{ 'M-X' | keyboardShortcut }}</span>
                                     </md-button>
@@ -168,6 +156,16 @@
                                     nv>Full screen</md-menu-item>
                             </md-menu-content>
                         </md-menu>
+                        <button ng-click="ctrl.showHelp($event)">
+                            Help
+                        </button>
+                        <span flex></span>
+                        <button ng-click="ctrl.addCurve($event)">
+                            Add Curve
+                        </button>
+                        <button ng-click="ctrl.deleteCurve($event)">
+                            Delete Curve
+                        </button>
                     </md-menu-bar>
                 </div>
             </div>
@@ -180,6 +178,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-aria.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-messages.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-route.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-sanitize.js"></script>
 
 
     <!-- Angular Material Library -->

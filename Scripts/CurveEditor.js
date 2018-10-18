@@ -51,6 +51,10 @@ class CurveEditor {
             enable: true
         });
 
+        hammer.get('press').set({
+            time: 500
+        });
+
         hammer.get('pan').set({
             threshold: 0
         });
@@ -317,6 +321,10 @@ class CurveEditor {
             this.selectedCurve = -1;
             this.selectedHandle = -1;
         }
+    }
+
+    deleteAll() {
+        this.curves = [];
     }
 
     setControlPolygonVisibility(visible) {
