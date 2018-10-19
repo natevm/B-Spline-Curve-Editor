@@ -133,11 +133,11 @@ class CurveEditor {
 
         document.addEventListener('wheel', (e) => {
             if (e.deltaY < 0.0) {
-                this.zoom -= -e.deltaY * .001;
+                this.zoom -= -e.deltaY * .0001;
                 this.zoom = Math.max(this.zoom, .1);
             } else {
 
-                this.zoom += e.deltaY * .001;
+                this.zoom += e.deltaY * .0001;
             }
             console.log(e);
             }, { capture: false, passive: true})
