@@ -1,16 +1,20 @@
 import { CurveEditor } from "./CurveEditor.js"
+import { KnotEditor } from "./KnotEditor.js"
 import { Curve } from "./Curve.js"
 
 /* Is this required? */
 let curveEditor;
+let knotEditor;
 
 const render = function (time) {
     curveEditor.render(time);
+    knotEditor.render(time);
     requestAnimationFrame(render);
 };
 
 document.addEventListener('DOMContentLoaded', function () {
     curveEditor = new CurveEditor();
+    knotEditor = new KnotEditor();
     requestAnimationFrame(render);
 
     var UploadFileButton = document.getElementById("UploadFile");
@@ -91,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 window.onresize = function () {
     curveEditor.resize()
+    knotEditor.resize()
 };
 
 angular
@@ -317,11 +322,11 @@ angular
         $scope.openBottomSheet = function(ev) {
             $scope.alert = '';
             $mdBottomSheet.show({
-            templateUrl: 'bottom-sheet-grid-template.html',
-            controller: 'GridBottomSheetCtrl',
-            clickOutsideToClose: true
+                templateUrl: 'bottom-sheet-grid-template.html',
+                controller: 'GridBottomSheetCtrl',
+                clickOutsideToClose: true
             }).then(function(clickedItem) {
-            $mdToast.show(
+                $mdToast.show(
                     $mdToast.simple()
                     .textContent(clickedItem['name'] + ' clicked!')
                     .position('top right')
@@ -337,18 +342,13 @@ angular
             console.log("closing");
         }
     })
-    .controller('GridBottomSheetCtrl', function($scope, $mdBottomSheet) {
-        // $scope.items = [
-        //   { name: 'Hangout', icon: 'hangout' },
-        //   { name: 'Mail', icon: 'mail' },
-        //   { name: 'Message', icon: 'message' },
-        //   { name: 'Copy', icon: 'copy2' },
-        //   { name: 'Facebook', icon: 'facebook' },
-        //   { name: 'Twitter', icon: 'twitter' },
-        // ];
-      
+    .controller('GridBottomSheetCtrl', function($scope, $mdBottomSheet, $timeout) {
+        $timeout(function () {
+            knotEditor.initializeWebGL();
+        });
         $scope.listItemClick = function() {
-        //   var clickedItem = $scope.items[$index];
-          $mdBottomSheet.hide("test");
         };
-      });
+        $scope.$on("$destroy", function() {
+            knotEditor.clearWebGL();
+        });
+    });
