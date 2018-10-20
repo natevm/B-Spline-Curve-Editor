@@ -111,7 +111,7 @@ angular
             '300': '333333', // primary/warn
             '400': '444444',
             '500': '555555', // primary/warn 
-            '600': '00FF00', // background accent
+            '600': '22FF22', // background accent
             '700': '777777',
             '800': '888888', // primary/warn
             '900': '999999',
@@ -159,7 +159,7 @@ angular
             snappingEnabled: true,
             fullScreen: false,
             insertionMode: 'front',
-            designName: "Untitled design"
+            designName: (localStorage.getItem("design_name") == undefined) ? "Untitled design" : localStorage.getItem("design_name")
         };
 
         this.sampleAction = function (name, ev) {
@@ -269,6 +269,8 @@ angular
         };
 
         this.renameDesign = function(ev) {
+            curveEditor.setShortcutsEnabled(false);
+
             // Appending dialog to document.body to cover sidenav in docs app
             var confirm = $mdDialog.prompt()
             .title('What would you like to rename your design?')
@@ -282,13 +284,18 @@ angular
             .cancel('Cancel');
 
             $mdDialog.show(confirm).then((result) => {
-            this.settings.designName = result;
+                this.settings.designName = result;
+                localStorage.setItem("design_name", this.settings.designName);
+                curveEditor.setShortcutsEnabled(true);
             }, ()  => {
-            console.log('Rename canceled');
+                console.log('Rename canceled');
+                curveEditor.setShortcutsEnabled(true);
             });
         };
 
         this.newDesign = function(ev) {
+            curveEditor.setShortcutsEnabled(false);
+
             // Appending dialog to document.body to cover sidenav in docs app
             var confirm = $mdDialog.prompt()
                 .title('What would you like to call your design?')
@@ -304,8 +311,11 @@ angular
             $mdDialog.show(confirm).then((result) => {
                 this.settings.designName = result;
                 curveEditor.deleteAll();
+                localStorage.setItem("design_name", this.settings.designName);
+                curveEditor.setShortcutsEnabled(true);
             }, ()  => {
                 console.log('New design canceled');
+                curveEditor.setShortcutsEnabled(true);
             });
         };
 

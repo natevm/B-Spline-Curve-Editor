@@ -126,25 +126,38 @@ class Curve {
         return shader;
     }
 
-    constructor(x = 0, y = 0) {
+    constructor(x = 0, y = 0, obj = null) {
         this.showCurve = true;
         this.showControlPolygon = true;
         this.showControlPoints = true;
-        this.numSamples = 200;
-        this.thickness = 20.0;
-        this.controlPoints = [
+        this.numSamples = (obj == null) ? 200 : obj.numSamples;
+        this.thickness = (obj == null) ? 20.0 : obj.thickness;
+        this.controlPoints = (obj == null) ? [
             -100.0 + x, y, 0.0,
             100.0 + x, y, 0.0,
-        ];
+        ] : obj.controlPoints;
 
-        this.handleRadius = 80;
-        this.handleThickness = 10.;
-        this.handleSamples = 30;
+        this.handleRadius = (obj == null) ? 50 : obj.handleRadius;
+        this.handleThickness = (obj == null) ? 10. : obj.handleThickness;
+        this.handleSamples = (obj == null) ? 30 : obj.handleSamples;
         this.selected = false;
-        this.selectedColor = [1.0, 1.0, 1.0, 1.0];
-        this.deselectedColor = [.1, .1, .1, 1.0];
+        this.selectedColor = (obj == null) ? [1.0, 1.0, 1.0, 1.0] : obj.selectedColor;
+        this.deselectedColor = (obj == null) ? [.2, .2, .2, 1.0] : obj.deselectedColor;
 
         this.updateBuffers();
+    }
+
+    toJSON() {
+        return {
+            numSamples: 200,
+            thickness: 20.0,
+            controlPoints: this.controlPoints,
+            handleRadius: this.handleRadius,
+            handleThickness: this.handleThickness,
+            handleSamples: this.handleSamples,
+            selectedColor: this.selectedColor,
+            deselectedColor: this.deselectedColor
+        };
     }
 
     select() {

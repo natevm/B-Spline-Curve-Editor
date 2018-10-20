@@ -8,6 +8,7 @@ class CurveEditor {
         this.showCurves = true;
         this.showControlPolygons = true;
         this.showControlHandles = true;
+        this.shortcutsEnabled = true;
         this.then = 0.0;
         this.canvas = document.querySelector('#glcanvas');
         this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
@@ -34,13 +35,23 @@ class CurveEditor {
 
         /* Initialize curve shaders, start off with a random curve */
         Curve.Initialize(this.gl);
+
         this.curves = [];
-        for (let i = 0; i < 1; ++i) {
-            this.curves.push(new Curve());
-            this.curves[i].controlPoints = []
-            for (let j = 0; j < 5; ++j) {
-                this.curves[i].addHandle((this.canvas.clientWidth / 4.0) * (2.0 * Math.random() - 1.0), (this.canvas.clientHeight / 4.0) * (2.0 * Math.random() - 1.0))
+        if (localStorage.getItem("curves")) {
+            let curveObjs = JSON.parse(localStorage.getItem("curves"));
+            for (var i = 0; i < curveObjs.length; ++i) {
+                this.curves.push(new Curve(0, 0, curveObjs[i]));
             }
+        } else {
+            for (let i = 0; i < 1; ++i) {
+                this.curves.push(new Curve());
+                this.curves[i].controlPoints = []
+                for (let j = 0; j < 5; ++j) {
+                    this.curves[i].addHandle((this.canvas.clientWidth / 4.0) * (2.0 * Math.random() - 1.0), (this.canvas.clientHeight / 4.0) * (2.0 * Math.random() - 1.0))
+                }
+            }
+
+            this.backup();
         }
 
         /* Setup Hammer Events / */
@@ -116,13 +127,16 @@ class CurveEditor {
 
         /* Setup keyboard shortcuts */
         document.onkeyup = (e) => {
-            console.log("The key code is: " + e.keyCode);
+            if (!this.shortcutsEnabled) return;
+
             if (e.keyCode == 67) this.hideCurves();
             if (e.keyCode == 76) this.hideControlPolygons();
             if (e.keyCode == 80) this.hideControlHandles();
             if (e.keyCode == 65) this.addHandle();
             if (e.keyCode == 46) this.deleteLastHandle();
             if (e.keyCode == 78) this.newCurve();
+
+            this.backup();
         };
 
         /* Prevent right clicking the webgl canvas */
@@ -141,6 +155,15 @@ class CurveEditor {
             }
             console.log(e);
             }, { capture: false, passive: true})
+    }
+
+    setShortcutsEnabled( enabled) {
+        this.shortcutsEnabled = enabled;
+    }
+
+    backup() {
+        let json = JSON.stringify(this.curves);
+        localStorage.setItem("curves", json)
     }
 
     /* Changes the webgl viewport to account for screen resizes */
@@ -236,6 +259,8 @@ class CurveEditor {
         if (this.selectedHandle == -1) {
             this.originalPosition = this.position;
         }
+
+        this.backup();
     }
 
     press(x, y) {
@@ -262,6 +287,8 @@ class CurveEditor {
                 return;
             }
         }
+
+        this.backup();
     }
 
     setSnappingMode(enabled) {
@@ -307,6 +334,8 @@ class CurveEditor {
                 this.pressUp(); 
             }
         }
+
+        this.backup();
     }
 
     /* Draws the curves to the screen */
@@ -355,6 +384,8 @@ class CurveEditor {
             this.curves[this.selectedCurve].deselect();
         this.selectedCurve = this.curves.length - 1;
         this.curves[this.selectedCurve].select();
+
+        this.backup();
     }
 
     /* Deletes the last clicked handle */
@@ -370,12 +401,16 @@ class CurveEditor {
                 this.selectedHandle = -1;
             }
         }
+
+        this.backup();
     }
 
     addHandle() {
         if (this.selectedCurve != -1) {
             this.curves[this.selectedCurve].addHandle(-this.position.x/this.zoom, -this.position.y/this.zoom);
         }
+
+        this.backup();
     }
 
     /* Deletes the last modified curve */
@@ -385,10 +420,16 @@ class CurveEditor {
             this.selectedCurve = -1;
             this.selectedHandle = -1;
         }
+
+        this.backup();
     }
 
     deleteAll() {
         this.curves = [];
+        this.selectedCurve = -1;
+        this.selectedHandle = -1;
+
+        this.backup();
     }
 
     setControlPolygonVisibility(visible) {
