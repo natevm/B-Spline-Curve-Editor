@@ -58,3 +58,20 @@
     Copyright 2018 Google Inc. All Rights Reserved. 
     Use of this source code is governed by an MIT-style license that can be foundin the LICENSE file at http://material.angularjs.org/HEAD/license.
     */
+
+    .zoomSlider {
+      width: 256px;
+    }
+
+    #Menu {
+      -moz-user-select: -moz-none;
+      -khtml-user-select: none;
+      -webkit-user-select: none;
+
+      /*
+        Introduced in IE 10.
+        See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+      */
+      -ms-user-select: none;
+      user-select: none;
+    }

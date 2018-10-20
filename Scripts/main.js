@@ -156,6 +156,7 @@ angular
             showControlPolygon: true,
             showControlHandles: true,
             showCurve: true,
+            zoom: 25,
             snappingEnabled: true,
             fullScreen: false,
             insertionMode: 'front',
@@ -234,6 +235,11 @@ angular
 
         this.resetCamera = function(ev) {
             curveEditor.resetCamera();
+            this.settings.zoom = 25;
+        }
+
+        this.updateZoom = function() {
+            curveEditor.updateZoom((this.settings.zoom * 2.0) / 100.0);
         }
 
         this.save = function(ev) {

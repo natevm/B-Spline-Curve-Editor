@@ -131,7 +131,7 @@ class Curve {
         this.showControlPolygon = true;
         this.showControlPoints = true;
         this.numSamples = (obj == null) ? 200 : obj.numSamples;
-        this.thickness = (obj == null) ? 20.0 : obj.thickness;
+        this.thickness = (obj == null) ? 10.0 : obj.thickness;
         this.controlPoints = (obj == null) ? [
             -100.0 + x, y, 0.0,
             100.0 + x, y, 0.0,
@@ -149,8 +149,8 @@ class Curve {
 
     toJSON() {
         return {
-            numSamples: 200,
-            thickness: 20.0,
+            numSamples: this.numSamples,
+            thickness: this.thickness,
             controlPoints: this.controlPoints,
             handleRadius: this.handleRadius,
             handleThickness: this.handleThickness,
