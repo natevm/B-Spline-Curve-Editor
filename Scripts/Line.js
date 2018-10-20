@@ -41,6 +41,7 @@ class Line {
                     next: gl.getAttribLocation(Line.ShaderPrograms[gl], 'next'),
                     previous: gl.getAttribLocation(Line.ShaderPrograms[gl], 'previous'),
                     direction: gl.getAttribLocation(Line.ShaderPrograms[gl], 'direction'),
+                    color: gl.getAttribLocation(Line.ShaderPrograms[gl], 'color'),
                 },
                 uniformLocations: {
                     projection: gl.getUniformLocation(Line.ShaderPrograms[gl], 'projection'),
@@ -48,7 +49,7 @@ class Line {
                     thickness: gl.getUniformLocation(Line.ShaderPrograms[gl], 'thickness'),
                     aspect: gl.getUniformLocation(Line.ShaderPrograms[gl], 'aspect'),
                     miter: gl.getUniformLocation(Line.ShaderPrograms[gl], 'miter'),
-                    color: gl.getUniformLocation(Line.ShaderPrograms[gl], 'color'),
+                    color: gl.getUniformLocation(Line.ShaderPrograms[gl], 'ucolor'),
                 },
             };
         });
@@ -118,12 +119,14 @@ class Line {
             this.buffers[gl].next = gl.createBuffer();
             this.buffers[gl].previous = gl.createBuffer();
             this.buffers[gl].direction = gl.createBuffer();
+            this.buffers[gl].color = gl.createBuffer();
         }
 
         let next = [];
         let prev = [];
         let pos = [];
         let direction = []
+        let color = [];
         for (var i = 0; i < this.points.length / 3; ++i) {
             let iprev = Math.max(i - 1, 0);
             let inext = Math.min(i + 1, (this.points.length / 3) - 1);
@@ -133,6 +136,8 @@ class Line {
             prev.push(this.points[iprev * 3 + 0], this.points[iprev * 3 + 1], this.points[iprev * 3 + 2])
             pos.push(this.points[i * 3 + 0], this.points[i * 3 + 1], this.points[i * 3 + 2])
             pos.push(this.points[i * 3 + 0], this.points[i * 3 + 1], this.points[i * 3 + 2])
+            color.push(0.0, 0.0, 0.0, 1.0);
+            color.push(0.0, 0.0, 0.0, 1.0);
             direction.push(-1, 1);
         }
 
@@ -147,6 +152,9 @@ class Line {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers[gl].direction);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(direction), gl.STATIC_DRAW);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers[gl].color);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(color), gl.STATIC_DRAW);
     }
 
     freeBuffers(gl) {
@@ -154,6 +162,7 @@ class Line {
         gl.deleteBuffer(this.buffers[gl].next)
         gl.deleteBuffer(this.buffers[gl].previous)
         gl.deleteBuffer(this.buffers[gl].direction)
+        gl.deleteBuffer(this.buffers[gl].color)
         this.buffers[gl] = undefined;
         Line.ShaderPrograms[gl] = undefined;
         Line.ProgramInfo[gl] = undefined;
@@ -162,7 +171,6 @@ class Line {
 
     draw(gl, projection, modelView, aspect, time) {
         if (!Line.ShaderPrograms[gl]) return;
-
         // position values
         {
             const numComponents = 3;
@@ -237,6 +245,25 @@ class Line {
                 offset);
             gl.enableVertexAttribArray(
                 Line.ProgramInfo[gl].attribLocations.direction);
+        }
+
+        // color
+        {
+            const numComponents = 4;
+            const type = gl.FLOAT;
+            const normalize = false;
+            const stride = 0;
+            const offset = 0;
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers[gl].color);
+            gl.vertexAttribPointer(
+                Line.ProgramInfo[gl].attribLocations.color,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset);
+            gl.enableVertexAttribArray(
+                Line.ProgramInfo[gl].attribLocations.color);
         }
 
 

@@ -72,6 +72,7 @@ class Curve {
                     next: gl.getAttribLocation(Curve.LineShaderProgram, 'next'),
                     previous: gl.getAttribLocation(Curve.LineShaderProgram, 'previous'),
                     direction: gl.getAttribLocation(Curve.LineShaderProgram, 'direction'),
+                    color: gl.getAttribLocation(Curve.LineShaderProgram, 'color'),
                 },
                 uniformLocations: {
                     projection: gl.getUniformLocation(Curve.LineShaderProgram, 'projection'),
@@ -79,7 +80,7 @@ class Curve {
                     thickness: gl.getUniformLocation(Curve.LineShaderProgram, 'thickness'),
                     aspect: gl.getUniformLocation(Curve.LineShaderProgram, 'aspect'),
                     miter: gl.getUniformLocation(Curve.LineShaderProgram, 'miter'),
-                    color: gl.getUniformLocation(Curve.LineShaderProgram, 'color'),
+                    color: gl.getUniformLocation(Curve.LineShaderProgram, 'ucolor'),
                 },
             };
         });
@@ -136,13 +137,15 @@ class Curve {
             -100.0 + x, y, 0.0,
             100.0 + x, y, 0.0,
         ] : obj.controlPoints;
+        this.temporaryPoint = []
 
         this.handleRadius = (obj == null) ? 50 : obj.handleRadius;
         this.handleThickness = (obj == null) ? 10. : obj.handleThickness;
         this.handleSamples = (obj == null) ? 30 : obj.handleSamples;
         this.selected = false;
-        this.selectedColor = (obj == null) ? [1.0, 1.0, 1.0, 1.0] : obj.selectedColor;
-        this.deselectedColor = (obj == null) ? [.2, .2, .2, 1.0] : obj.deselectedColor;
+        this.selectedHandle = -1;
+        this.selectedColor = (obj == null) ? [0.0,0.0,0.0,0.0] : obj.selectedColor;
+        this.deselectedColor = (obj == null) ? [-.7,-.7,-.7,0.0] : obj.deselectedColor;
 
         this.updateBuffers();
     }
@@ -164,8 +167,13 @@ class Curve {
         this.selected = true;
     }
 
+    selectHandle(selectedHandle) {
+        this.selectedHandle = selectedHandle;
+    }
+
     deselect() {
         this.selected = false;
+        this.selectedHandle = -1;
     }
 
     updateBuffers() {
@@ -179,12 +187,14 @@ class Curve {
             this.buffers.controlPointsNext = gl.createBuffer();
             this.buffers.controlPointsPrevious = gl.createBuffer();
             this.buffers.controlPointsDirection = gl.createBuffer();
+            this.buffers.controlPointsColors = gl.createBuffer();
 
             this.buffers.handlePointsPosition = gl.createBuffer();
             this.buffers.handlePointsNext = gl.createBuffer();
             this.buffers.handlePointsPrevious = gl.createBuffer();
             this.buffers.handlePointsDirection = gl.createBuffer();
             this.buffers.handlePointsIndices = gl.createBuffer();
+            this.buffers.handlePointsColors = gl.createBuffer();
         }
 
 
@@ -202,6 +212,7 @@ class Curve {
         let prev = [];
         let pos = [];
         let ctlDirection = []
+        let controlPointColors = []
         for (var i = 0; i < this.controlPoints.length / 3; ++i) {
             let iprev = Math.max(i - 1, 0);
             let inext = Math.min(i + 1, (this.controlPoints.length / 3) - 1);
@@ -211,6 +222,9 @@ class Curve {
             prev.push(this.controlPoints[iprev * 3 + 0], this.controlPoints[iprev * 3 + 1], this.controlPoints[iprev * 3 + 2])
             pos.push(this.controlPoints[i * 3 + 0], this.controlPoints[i * 3 + 1], this.controlPoints[i * 3 + 2])
             pos.push(this.controlPoints[i * 3 + 0], this.controlPoints[i * 3 + 1], this.controlPoints[i * 3 + 2])
+            controlPointColors.push(1.0, 1.0, 1.0, 1.0);
+            controlPointColors.push(1.0, 1.0, 1.0, 1.0);
+            controlPointColors.push(1.0, 1.0, 1.0, 1.0);
             ctlDirection.push(-1, 1);
         }
 
@@ -223,7 +237,12 @@ class Curve {
         let handlePointsNext = [];
         let handlePointsDirection = [];
         let handlePointsIndices = [];
-        for (var i = 0; i < this.controlPoints.length / 3; ++i) {
+        let handlePointColors = [];
+        let temppts = this.controlPoints.slice();
+        if (this.temporaryPoint.length != 0) {
+            temppts.push(this.temporaryPoint[0], this.temporaryPoint[1], this.temporaryPoint[2]);
+        }
+        for (var i = 0; i < temppts.length / 3; ++i) {
             for (var j = 0; j < this.handleSamples + 1; ++j) {
                 let jprev = Math.max(j - 1, 0);
                 let jnext = Math.min(j + 1, this.handleSamples);
@@ -232,16 +251,29 @@ class Curve {
                 let degree = (j / (1.0 * this.handleSamples - 1)) * 2 * Math.PI;
                 let degreeNext = (jnext / (1.0 * this.handleSamples - 1)) * 2 * Math.PI;
 
-                handlePointsPrev.push(this.controlPoints[i * 3 + 0] + Math.cos(degreePrev) * this.handleRadius, this.controlPoints[i * 3 + 1] + Math.sin(degreePrev) * this.handleRadius, 0.0);
-                handlePointsPrev.push(this.controlPoints[i * 3 + 0] + Math.cos(degreePrev) * this.handleRadius, this.controlPoints[i * 3 + 1] + Math.sin(degreePrev) * this.handleRadius, 0.0);
+                let rad = (i == this.selectedHandle) ? this.handleRadius  * 1.0: this.handleRadius;
 
-                handlePoints.push(this.controlPoints[i * 3 + 0] + Math.cos(degree) * this.handleRadius, this.controlPoints[i * 3 + 1] + Math.sin(degree) * this.handleRadius, 0.0);
-                handlePoints.push(this.controlPoints[i * 3 + 0] + Math.cos(degree) * this.handleRadius, this.controlPoints[i * 3 + 1] + Math.sin(degree) * this.handleRadius, 0.0);
+                handlePointsPrev.push(temppts[i * 3 + 0] + Math.cos(degreePrev) * rad, temppts[i * 3 + 1] + Math.sin(degreePrev) * rad, 0.0);
+                handlePointsPrev.push(temppts[i * 3 + 0] + Math.cos(degreePrev) * rad, temppts[i * 3 + 1] + Math.sin(degreePrev) * rad, 0.0);
 
-                handlePointsNext.push(this.controlPoints[i * 3 + 0] + Math.cos(degreeNext) * this.handleRadius, this.controlPoints[i * 3 + 1] + Math.sin(degreeNext) * this.handleRadius, 0.0);
-                handlePointsNext.push(this.controlPoints[i * 3 + 0] + Math.cos(degreeNext) * this.handleRadius, this.controlPoints[i * 3 + 1] + Math.sin(degreeNext) * this.handleRadius, 0.0);
+                handlePoints.push(temppts[i * 3 + 0] + Math.cos(degree) * rad, temppts[i * 3 + 1] + Math.sin(degree) * rad, 0.0);
+                handlePoints.push(temppts[i * 3 + 0] + Math.cos(degree) * rad, temppts[i * 3 + 1] + Math.sin(degree) * rad, 0.0);
 
-                handlePointsDirection.push(-1, 1);
+                handlePointsNext.push(temppts[i * 3 + 0] + Math.cos(degreeNext) * rad, temppts[i * 3 + 1] + Math.sin(degreeNext) * rad, 0.0);
+                handlePointsNext.push(temppts[i * 3 + 0] + Math.cos(degreeNext) * rad, temppts[i * 3 + 1] + Math.sin(degreeNext) * rad, 0.0);
+
+                handlePointsDirection.push(-1, 1 * (this.selectedHandle == i) ? 5 : 1);
+
+                if ((i == ((temppts.length / 3) - 1)) && (this.temporaryPoint.length != 0)) {
+                    handlePointColors.push(this.temporaryPointColor[0], this.temporaryPointColor[1], this.temporaryPointColor[2], this.temporaryPointColor[3]);
+                    handlePointColors.push(this.temporaryPointColor[0], this.temporaryPointColor[1], this.temporaryPointColor[2], this.temporaryPointColor[3]);
+                    // handlePointColors.push(this.temporaryPointColor[0], this.temporaryPointColor[1], this.temporaryPointColor[2], this.temporaryPointColor[3]);
+                } 
+                else {
+                    handlePointColors.push(1.0, 1.0, 1.0, 1.0);
+                    handlePointColors.push(1.0, 1.0, 1.0, 1.0);
+                    // handlePointColors.push(1.0, 1.0, 1.0, 1.0);
+                }
 
                 if (j != this.handleSamples) {
                     let offset = 2 * (this.handleSamples + 1) * i; // 2 points per point. 6 floats per point. handleSamples + 1 points. 
@@ -252,7 +284,7 @@ class Curve {
             }
         }
 
-
+        /* Control points */
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.tDirection);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tDirection), gl.STATIC_DRAW);
 
@@ -271,6 +303,10 @@ class Curve {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.controlPointsDirection);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ctlDirection), gl.STATIC_DRAW);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.controlPointsColors);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(controlPointColors), gl.STATIC_DRAW)
+
+        /* Handles */
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.handlePointsPosition);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(handlePoints), gl.STATIC_DRAW);
 
@@ -285,6 +321,9 @@ class Curve {
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.handlePointsIndices);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(handlePointsIndices), gl.STATIC_DRAW);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.handlePointsColors);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(handlePointColors), gl.STATIC_DRAW)
     }
 
     getBezierPoints() {
@@ -351,6 +390,7 @@ class Curve {
 
     removeHandle(handleIdx) {
         this.controlPoints.splice(handleIdx * 3, 3);
+        this.selectedHandle = -1;
     }
 
     sqr(x) { return x * x }
@@ -413,6 +453,16 @@ class Curve {
             }
         }
 
+    }
+
+    setTemporaryHandle(x, y, r, g, b, a) {
+        this.temporaryPoint = [x, y, 0.0]
+        this.temporaryPointColor = [r, g, b, a]
+    }
+
+    clearTemporaryHandle() {
+        this.temporaryPoint = [];
+        this.temporaryPointColor = [];
     }
 
     getHandlePos(index) {
@@ -592,6 +642,25 @@ class Curve {
                 Curve.LineProgramInfo.attribLocations.direction);
         }
 
+        // color values
+        {
+            const numComponents = 4;
+            const type = gl.FLOAT;
+            const normalize = false;
+            const stride = 0;
+            const offset = 0;
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.handlePointsColors);
+            gl.vertexAttribPointer(
+                Curve.LineProgramInfo.attribLocations.color,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset);
+            gl.enableVertexAttribArray(
+                Curve.LineProgramInfo.attribLocations.color);
+        }
+
 
         // Tell WebGL to use our program when drawing
         gl.useProgram(Curve.LineProgramInfo.program);
@@ -624,7 +693,7 @@ class Curve {
             this.selected ? this.selectedColor : this.deselectedColor);
 
         {
-            const vertexCount = (this.handleSamples * 6) * (this.controlPoints.length / 3);
+            const vertexCount = (this.handleSamples * 6) * ( (this.controlPoints.length + this.temporaryPoint.length) / 3);
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
             // gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
@@ -712,6 +781,25 @@ class Curve {
                 offset);
             gl.enableVertexAttribArray(
                 Curve.LineProgramInfo.attribLocations.direction);
+        }
+
+        // color values
+        {
+            const numComponents = 4;
+            const type = gl.FLOAT;
+            const normalize = false;
+            const stride = 0;
+            const offset = 0;
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.controlPointsColors);
+            gl.vertexAttribPointer(
+                Curve.LineProgramInfo.attribLocations.color,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset);
+            gl.enableVertexAttribArray(
+                Curve.LineProgramInfo.attribLocations.color);
         }
 
 

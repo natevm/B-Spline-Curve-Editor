@@ -3,6 +3,7 @@ attribute vec3 position;
 attribute float direction; 
 attribute vec3 next;
 attribute vec3 previous;
+attribute vec4 color; 
 
 uniform mat4 modelView;
 uniform mat4 projection;
@@ -10,7 +11,7 @@ uniform float aspect;
 
 uniform float thickness;
 uniform int miter;
-uniform vec4 color;
+uniform vec4 ucolor;
 
 varying lowp vec4 vColor;
 // varying lowp vec3 vOffset;
@@ -54,5 +55,5 @@ void main() {
   gl_PointSize = 1.0;
 
   // vOffset = offset;
-  vColor = color;
+  vColor = ucolor + color;
 }

@@ -22,6 +22,9 @@ class CurveEditor {
         this.snappingEnabled = true;
         this.zooming = false;
         this.panning = false;
+        this.mousedown = false;
+        this.touchstart = false;
+        this.doubletapped = false;
 
         // If we don't have a GL context, give up now  
         if (!this.gl) {
@@ -61,16 +64,13 @@ class CurveEditor {
             domEvents: true
         });
 
-        hammer.get('pinch').set({
-            enable: true
-        });
-
         hammer.get('press').set({
-            time: 500
+            time: 200
         });
 
         hammer.get('pan').set({
-            threshold: 10
+            threshold: 10,
+            threshold: 9
         });
 
         /* Pan */
@@ -99,6 +99,7 @@ class CurveEditor {
         hammer.on('press', (e) => {
             this.press((e.center.x / this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
                 (e.center.y / this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom)));
+            console.log(e);
         });
         hammer.on('pressup', (e) => { this.pressUp(); });
 
@@ -144,16 +145,16 @@ class CurveEditor {
             return false;
         }
 
-        // document.addEventListener('wheel', (e) => {
-        //     if (e.deltaY < 0.0) {
-        //         this.zoom -= -e.deltaY * .0001;
-        //         this.zoom = Math.max(this.zoom, .1);
-        //     } else {
-
-        //         this.zoom += e.deltaY * .0001;
-        //     }
-        //     console.log(e);
-        //     }, { capture: false, passive: true})
+        document.addEventListener("mousedown", (e) => { this.mousedown = true; });
+        document.addEventListener("mouseup", (e) => { 
+            this.mousedown = false; 
+            if (this.selectedCurve != -1) {
+                this.curves[this.selectedCurve].clearTemporaryHandle();
+            }            
+        });
+        document.addEventListener("touchstart", (e) => { this.mousedown = true; });
+        document.addEventListener("touchend", (e) => { this.mousedown = false; });
+        document.addEventListener("touchcancel", (e) => { this.mousedown = false; });
     }
 
     updateZoom(zoomAmount) {
@@ -192,16 +193,21 @@ class CurveEditor {
             var ctl_idx = this.curves[j].getClickedHandle(x - this.position.x, y - this.position.y);
             if (ctl_idx != -1) {
                 this.selectedHandle = ctl_idx;
-                if (this.selectedCurve != -1)
+                if (this.selectedCurve != -1) 
                     this.curves[this.selectedCurve].deselect();
                 this.selectedCurve = j;
                 this.curves[j].select();
+                this.curves[j].selectHandle(ctl_idx);
                 break;
             }
         }
     }
 
     panStart(initialX, initialY, deltaX, deltaY) {
+        if (this.selectedCurve != -1) {
+            this.curves[this.selectedCurve].clearTemporaryHandle();
+        }
+
         this.panning = true;
 
         /* Check if we're moving a point */
@@ -212,6 +218,7 @@ class CurveEditor {
             var ctl_idx = this.curves[this.selectedCurve].getClickedHandle((initialX - deltaX) - this.position.x, (initialY - deltaY) - this.position.y);
             if (ctl_idx != -1) {
                 this.selectedHandle = ctl_idx;
+                this.curves[this.selectedCurve].selectHandle(ctl_idx);
             }
         }
 
@@ -225,6 +232,7 @@ class CurveEditor {
                         this.curves[this.selectedCurve].deselect();
                     this.selectedCurve = j;
                     this.curves[j].select();
+                    this.curves[j].selectHandle(ctl_idx);
                     break;
                 }
             }
@@ -278,31 +286,56 @@ class CurveEditor {
     }
 
     press(x, y) {
+        var deleting = false;
+        console.log("pressing")
         if (this.selectedCurve != -1) {
             var ctl_idx = this.curves[this.selectedCurve].getClickedHandle(
                 x - this.position.x,
                 y - this.position.y);
             if (ctl_idx == -1) {
-                if (this.pointJustAdded == false) {
-                    this.curves[this.selectedCurve].addHandle(
-                        x - this.position.x,
-                        y - this.position.y, this.addToFront, this.addToBack, this.addToClosest);
-                    this.selectedHandle = (this.curves[this.selectedCurve].controlPoints.length / 3) - 1;
-                } else {
-                    this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
-                        x - this.position.x,
-                        y - this.position.y);
-                }
-                this.pointJustAdded = true;
+                this.curves[this.selectedCurve].setTemporaryHandle(x - this.position.x, y - this.position.y, 0.1, 1.0, 0.0, 1.0);
             }
-            else if (this.pointJustAdded == false) {
-                this.selectedHandle = ctl_idx;
-                this.deleteLastHandle();
-                return;
+            else {
+                let handlePos = this.curves[this.selectedCurve].getHandlePos(ctl_idx);
+                this.curves[this.selectedCurve].setTemporaryHandle(handlePos[0], handlePos[1], 1.0, 0.0, 0.0, 1.0);
+                deleting = true;
             }
         }
 
-        this.backup();
+        setTimeout(() => {
+            if (this.selectedCurve != -1) {
+                this.curves[this.selectedCurve].clearTemporaryHandle();
+            }
+
+            if (this.mousedown && this.panning == false) {
+                if (this.selectedCurve != -1) {
+                    var ctl_idx = this.curves[this.selectedCurve].getClickedHandle(
+                        x - this.position.x,
+                        y - this.position.y);
+                    if (ctl_idx == -1) {
+                        if (this.pointJustAdded == false) {
+                            this.curves[this.selectedCurve].addHandle(
+                                x - this.position.x,
+                                y - this.position.y, this.addToFront, this.addToBack, this.addToClosest);
+                            this.selectedHandle = (this.curves[this.selectedCurve].controlPoints.length / 3) - 1;
+                        } else {
+                            this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
+                                x - this.position.x,
+                                y - this.position.y);
+                        }
+                        this.pointJustAdded = true;
+                    }
+                    else if (this.pointJustAdded == false) {
+                        this.selectedHandle = ctl_idx;
+                        this.deleteLastHandle();
+                        return;
+                    }
+                }
+                this.backup();
+            }
+
+        }, deleting ? 600 : 400);
+
     }
 
     setSnappingMode(enabled) {
@@ -320,6 +353,8 @@ class CurveEditor {
     }
 
     doubleTap(x, y) {
+        console.log("doubletap")
+        this.doubletapped = true;
         if (this.selectedCurve == -1) {
             for (var j = 0; j < this.curves.length; ++j) {
                 var ctl_idx = this.curves[j].getClickedHandle(
@@ -344,7 +379,32 @@ class CurveEditor {
                 return;
             }
             else {
-                this.press(x, y);
+                if (this.mousedown && this.panning == false) {
+                    if (this.selectedCurve != -1) {
+                        var ctl_idx = this.curves[this.selectedCurve].getClickedHandle(
+                            x - this.position.x,
+                            y - this.position.y);
+                        if (ctl_idx == -1) {
+                            if (this.pointJustAdded == false) {
+                                this.curves[this.selectedCurve].addHandle(
+                                    x - this.position.x,
+                                    y - this.position.y, this.addToFront, this.addToBack, this.addToClosest);
+                                this.selectedHandle = (this.curves[this.selectedCurve].controlPoints.length / 3) - 1;
+                            } else {
+                                this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
+                                    x - this.position.x,
+                                    y - this.position.y);
+                            }
+                            this.pointJustAdded = true;
+                        }
+                        else if (this.pointJustAdded == false) {
+                            this.selectedHandle = ctl_idx;
+                            this.deleteLastHandle();
+                            return;
+                        }
+                    }
+                    this.backup();
+                }
                 this.pressUp();
             }
         }
