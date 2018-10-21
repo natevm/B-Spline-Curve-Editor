@@ -102,7 +102,7 @@ class Line {
 
     constructor(gl, x = 0.0, y = 0.0) {
         this.numSamples = 200;
-        this.thickness = 20.0;
+        this.thickness = 5.0;
         this.buffers = [];
         this.points = [
             -100.0 + x, y, 0.0,

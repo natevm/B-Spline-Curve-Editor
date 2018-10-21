@@ -532,6 +532,14 @@ class CurveEditor {
         this.originalPosition = { x: 0, y: 0 };
         this.zoom = 0.5;
     }
+
+    getNumCtlPointsOfSelected() {
+        if (this.selectedCurve == -1)
+            return -1;
+        else {
+            return this.curves[this.selectedCurve].getNumCtlPoints();
+        }
+    }
 }
 
 export { CurveEditor };

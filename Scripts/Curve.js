@@ -131,7 +131,7 @@ class Curve {
         this.showCurve = true;
         this.showControlPolygon = true;
         this.showControlPoints = true;
-        this.numSamples = (obj == null) ? 200 : obj.numSamples;
+        this.numSamples = 200;
         this.thickness = (obj == null) ? 10.0 : obj.thickness;
         this.controlPoints = (obj == null) ? [
             -100.0 + x, y, 0.0,
@@ -139,27 +139,21 @@ class Curve {
         ] : obj.controlPoints;
         this.temporaryPoint = []
 
-        this.handleRadius = (obj == null) ? 50 : obj.handleRadius;
-        this.handleThickness = (obj == null) ? 10. : obj.handleThickness;
-        this.handleSamples = (obj == null) ? 30 : obj.handleSamples;
+        this.handleRadius = 50;
+        this.handleThickness = 10.;
+        this.handleSamples = 30;
         this.selected = false;
         this.selectedHandle = -1;
-        this.selectedColor = (obj == null) ? [0.0,0.0,0.0,0.0] : obj.selectedColor;
-        this.deselectedColor = (obj == null) ? [-.7,-.7,-.7,0.0] : obj.deselectedColor;
+        this.selectedColor = [0.0,0.0,0.0,0.0];
+        this.deselectedColor = [-.9,-.9,-.9,0.0];
 
         this.updateBuffers();
     }
 
     toJSON() {
         return {
-            numSamples: this.numSamples,
             thickness: this.thickness,
             controlPoints: this.controlPoints,
-            handleRadius: this.handleRadius,
-            handleThickness: this.handleThickness,
-            handleSamples: this.handleSamples,
-            selectedColor: this.selectedColor,
-            deselectedColor: this.deselectedColor
         };
     }
 
@@ -172,8 +166,13 @@ class Curve {
     }
 
     deselect() {
+        this.clearTemporaryHandle();
         this.selected = false;
         this.selectedHandle = -1;
+    }
+
+    getNumCtlPoints() {
+        return this.controlPoints.length / 3;
     }
 
     updateBuffers() {
@@ -262,7 +261,7 @@ class Curve {
                 handlePointsNext.push(temppts[i * 3 + 0] + Math.cos(degreeNext) * rad, temppts[i * 3 + 1] + Math.sin(degreeNext) * rad, 0.0);
                 handlePointsNext.push(temppts[i * 3 + 0] + Math.cos(degreeNext) * rad, temppts[i * 3 + 1] + Math.sin(degreeNext) * rad, 0.0);
 
-                handlePointsDirection.push(-1, 1 * (this.selectedHandle == i) ? 5 : 1);
+                handlePointsDirection.push(-1, 1 * (this.selectedHandle == i) ? 4 : 1);
 
                 if ((i == ((temppts.length / 3) - 1)) && (this.temporaryPoint.length != 0)) {
                     handlePointColors.push(this.temporaryPointColor[0], this.temporaryPointColor[1], this.temporaryPointColor[2], this.temporaryPointColor[3]);

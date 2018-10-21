@@ -359,12 +359,29 @@ angular
         }
     })
     .controller('GridBottomSheetCtrl', function($scope, $mdBottomSheet, $timeout) {
+        $scope.data = {
+            degree: 1,
+            numControlPoints: curveEditor.getNumCtlPointsOfSelected(),
+            numKnots: 2 + curveEditor.getNumCtlPointsOfSelected(),
+            minDegree: 1,
+            maxDegree: curveEditor.getNumCtlPointsOfSelected() - 1
+        };
         $timeout(function () {
-            knotEditor.initializeWebGL();
+            knotEditor.initializeWebGL();            
+            knotEditor.setNumControlPoints($scope.data.numControlPoints);
+            knotEditor.setDegree($scope.data.degree);
+            knotEditor.generateUniformFloatingKnotVector($scope.data.numKnots);
+            knotEditor.updateBasisFunctions();
         });
         $scope.listItemClick = function() {
         };
         $scope.$on("$destroy", function() {
             knotEditor.clearWebGL();
         });
+        $scope.updateDegree = function() {
+            $scope.data.numKnots = $scope.data.degree + 1 + curveEditor.getNumCtlPointsOfSelected();
+            knotEditor.setDegree($scope.data.degree);
+            knotEditor.generateUniformFloatingKnotVector($scope.data.numKnots);
+            knotEditor.updateBasisFunctions();
+        }
     });
