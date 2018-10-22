@@ -32,9 +32,12 @@ html, body {
 
 #knotCanvas {
     width: 100%;
-    height: 25%;
+    height: 100%;
 }
 
+md-bottom-sheet {
+    height: 25%;
+}
 #Menu {
     position: absolute;
     top: 0;

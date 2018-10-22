@@ -105,13 +105,13 @@ angular
             .defaultIconSet('img/icons/sets/core-icons.svg', 24);
 
         $mdThemingProvider.definePalette('black', {
-            '50': '#222222', // Background color of bottom sheet
+            '50': '222222', // Background color of bottom sheet
             '100': '111111',
             '200': '222222', // select
             '300': '333333', // primary/warn
             '400': '444444',
             '500': '555555', // primary/warn 
-            '600': '22FF22', // background accent
+            '600': '2b9a2b', // background accent
             '700': '777777',
             '800': '888888', // primary/warn
             '900': '999999',
@@ -363,7 +363,9 @@ angular
             curve : curveEditor.getSelectedCurve(),
             degree: curveEditor.getSelectedCurve().getDegree(),
             minDegree: 1,
-            maxDegree: curveEditor.getNumCtlPointsOfSelected() - 1
+            maxDegree: curveEditor.getNumCtlPointsOfSelected() - 1,
+            makeOpen: curveEditor.getSelectedCurve().isOpen,
+            makeUniform: curveEditor.getSelectedCurve().isUniform
         };
         $timeout(function () {
             knotEditor.initializeWebGL();            
@@ -395,7 +397,14 @@ angular
             }
             $scope.updateDegree();
         }
-        $scope.makeUniform = function() {
-            knotEditor.generateUniformFloatingKnotVector();
+
+        $scope.updateUniformProperty = function() {
+            $scope.data.curve.setUniformity($scope.data.makeUniform);
+            knotEditor.updateBasisFunctions();
+        }
+
+        $scope.updateOpenProperty = function() {
+            $scope.data.curve.setOpen($scope.data.makeOpen);
+            knotEditor.updateBasisFunctions();
         }
     });

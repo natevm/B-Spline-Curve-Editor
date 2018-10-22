@@ -9,26 +9,26 @@
  * @param   {number}  l       The lightness
  * @return  {Array}           The RGB representation
  */
-function hslToRgb(h, s, l){
+function hslToRgb(h, s, l) {
     var r, g, b;
 
-    if(s == 0){
+    if (s == 0) {
         r = g = b = l; // achromatic
-    } else{
-        var hue2rgb = function hue2rgb(p, q, t){
-            if(t < 0) t += 1;
-            if(t > 1) t -= 1;
-            if(t < 1/6) return p + (q - p) * 6 * t;
-            if(t < 1/2) return q;
-            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    } else {
+        var hue2rgb = function hue2rgb(p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
             return p;
         }
 
         var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
         var p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
+        r = hue2rgb(p, q, h + 1 / 3);
         g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
+        b = hue2rgb(p, q, h - 1 / 3);
     }
 
     return [(r), (g), (b)];
@@ -99,7 +99,7 @@ class Curve {
                     controlPoints: gl.getUniformLocation(Curve.BSplineShaderProgram, 'uControlPoints'),
                     numControlPoints: gl.getUniformLocation(Curve.BSplineShaderProgram, 'uNumControlPoints'),
                     knotVector: gl.getUniformLocation(Curve.BSplineShaderProgram, 'uKnotVector'),
-                    knotIndex:  gl.getUniformLocation(Curve.BSplineShaderProgram, 'knot_index'),
+                    knotIndex: gl.getUniformLocation(Curve.BSplineShaderProgram, 'knot_index'),
                     degree: gl.getUniformLocation(Curve.BSplineShaderProgram, 'degree'),
                     tmin: gl.getUniformLocation(Curve.BSplineShaderProgram, 'tMin'),
                     tmax: gl.getUniformLocation(Curve.BSplineShaderProgram, 'tMax'),
@@ -186,9 +186,10 @@ class Curve {
         this.handleSamples = 30;
         this.selected = false;
         this.selectedHandle = -1;
-        this.selectedColor = [0.0,0.0,0.0,0.0];
-        this.deselectedColor = [-.9,-.9,-.9,0.0];
-
+        this.selectedColor = [0.0, 0.0, 0.0, 0.0];
+        this.deselectedColor = [-.7, -.7, -.7, 0.0];
+        this.isOpen =  (obj == null) ? true : obj.isOpen;
+        this.isUniform = (obj == null) ?  true : obj.isUniform;
         this.degree = (obj == null) ? 1 : obj.degree;
         this.knot_vector = (obj == null) ? [0.0, .33, .66, 1.0] : obj.knot_vector;
 
@@ -200,7 +201,9 @@ class Curve {
             thickness: this.thickness,
             controlPoints: this.controlPoints,
             knot_vector: this.knot_vector,
-            degree: this.degree
+            degree: this.degree,
+            isOpen: this.isOpen,
+            isUniform: this.isUniform
         };
     }
 
@@ -226,13 +229,22 @@ class Curve {
         return this.degree;
     }
 
+    updateConstraints() {
+        if (this.isUniform) {
+            this.makeKnotVectorUniform();
+        }
+        if (this.isOpen) {
+            this.makeKnotVectorOpen();
+        }
+    }
+
     setDegree(degree) {
         let oldDegree = this.degree;
 
         if ((degree >= 1) && (degree <= this.getNumCtlPoints() - 1))
             this.degree = degree;
         else return;
-        
+
         if (this.knot_vector == undefined) {
             this.knot_vector = [];
         }
@@ -240,7 +252,7 @@ class Curve {
         let numKnots = this.getOrder() + this.getNumCtlPoints();
         if (oldDegree < this.degree) {
             for (var i = numKnots - (this.degree - oldDegree); i < numKnots; ++i) {
-                this.knot_vector.push(i / (numKnots - (1 + this.degree - oldDegree)) );
+                this.knot_vector.push(i / (numKnots - (1 + this.degree - oldDegree)));
             }
         } else {
             this.knot_vector = this.knot_vector.slice(0, numKnots);
@@ -249,6 +261,85 @@ class Curve {
         for (var i = 0; i < numKnots; ++i) {
             this.knot_vector[i] /= this.knot_vector[this.knot_vector.length - 1];
         }
+        this.updateConstraints();
+    }
+
+    makeKnotVectorUniform() {
+        this.knot_vector = [];
+        let numKnots = this.getOrder() + this.getNumCtlPoints();
+        for (var i = 0; i < numKnots; ++i) {
+            this.knot_vector.push(i / (numKnots - 1));
+        }
+    }
+
+    makeKnotVectorOpen() {
+        let numKnots = this.getOrder() + this.getNumCtlPoints();
+        var lower = this.knot_vector[this.degree];
+        var upper = this.knot_vector[this.knot_vector.length - 1 - (this.degree)];
+
+        for (var i = 0; i < numKnots; ++i) {
+            this.knot_vector[i] -= lower;
+            this.knot_vector[i] /= (upper - lower);
+        }
+
+        for (var i = 0; i < this.degree; ++i) {
+            this.knot_vector[i] = 0.0;
+        }
+
+        for (var i = this.knot_vector.length - (this.degree); i < this.knot_vector.length; ++i) {
+            this.knot_vector[i] = 1.0;
+        }
+
+        this.checkUpperEndConditions();
+    }
+
+    checkUpperEndConditions() {
+        var isOpen = true;
+        var lastVal = this.knot_vector[this.knot_vector.length - 1];
+        for (var i = this.knot_vector.length - 2; i >= this.knot_vector.length - (this.degree + 1); i--) {
+            if (this.knot_vector[i] != lastVal) {
+                isOpen = false;
+                break;
+            }
+        }
+
+        if (isOpen) {
+            let other = lastVal;
+            /* Try to find the first value which doesn't equal the last */
+            for (var i = this.knot_vector.length - 1; i >= 0; --i) {
+                if (this.knot_vector[i] != lastVal) {
+                    other = this.knot_vector[i];
+                    break;
+                }
+            }
+
+            this.knot_vector[this.knot_vector.length - 1] += .05;
+            for (var i = 0; i < this.knot_vector.length; ++i) {
+                this.knot_vector[i] /= this.knot_vector[this.knot_vector.length - 1];
+            }
+            // /* If all knots were moved to the end */
+            // if (other == lastVal) 
+            // {
+            // } else {
+            //     /* Move all knots except the last whose value equals the last value */
+            //     for (var i = 0; i < this.knot_vector.length - 1; ++i) {
+            //         if (this.knot_vector[i] == lastVal) {
+            //             this.knot_vector[i] = (lastVal + other) / 2;
+            //         }
+            //     }
+            // }
+        }
+
+    }
+
+    setUniformity(isUniform) {
+        this.isUniform = isUniform;
+        this.updateConstraints();
+    }
+
+    setOpen(isOpen) {
+        this.isOpen = isOpen;
+        this.updateConstraints();
     }
 
     getOrder() {
@@ -330,7 +421,7 @@ class Curve {
                 let degree = (j / (1.0 * this.handleSamples - 1)) * 2 * Math.PI;
                 let degreeNext = (jnext / (1.0 * this.handleSamples - 1)) * 2 * Math.PI;
 
-                let rad = (i == this.selectedHandle) ? this.handleRadius  * 1.0: this.handleRadius;
+                let rad = (i == this.selectedHandle) ? this.handleRadius * 1.0 : this.handleRadius;
                 if ((i == ((temppts.length / 3) - 1)) && (this.temporaryPoint.length != 0)) {
                     rad *= 1.2;
                 }
@@ -350,7 +441,7 @@ class Curve {
                     handlePointColors.push(this.temporaryPointColor[0], this.temporaryPointColor[1], this.temporaryPointColor[2], this.temporaryPointColor[3]);
                     handlePointColors.push(this.temporaryPointColor[0], this.temporaryPointColor[1], this.temporaryPointColor[2], this.temporaryPointColor[3]);
                     // handlePointColors.push(this.temporaryPointColor[0], this.temporaryPointColor[1], this.temporaryPointColor[2], this.temporaryPointColor[3]);
-                } 
+                }
                 else {
                     var rgb = hslToRgb(i * (1.0 / this.getNumCtlPoints()), 1., .5);;
                     // this.lines[i].color = [rgb[0], rgb[1], rgb[2], 1.0];
@@ -477,6 +568,8 @@ class Curve {
         this.controlPoints.splice(handleIdx * 3, 3);
         this.knot_vector.splice(handleIdx, 1);
         this.selectedHandle = -1;
+
+        this.updateConstraints();
     }
 
     sqr(x) { return x * x }
@@ -540,7 +633,7 @@ class Curve {
                 var distanceToEnd = vec2.distance(p, end);
                 if (distanceToEnd <= closestDistance) {
                     this.controlPoints.push(x, y, 0.0);
-                    this.knot_vector.push(1. + (1.0 / (this.knot_vector.length-1)));
+                    this.knot_vector.push(1. + (1.0 / (this.knot_vector.length - 1)));
                     for (var i = 0; i < this.knot_vector.length; ++i) {
                         this.knot_vector[i] /= this.knot_vector[this.knot_vector.length - 1];
                     }
@@ -556,6 +649,7 @@ class Curve {
             }
         }
 
+        this.updateConstraints();
     }
 
     setTemporaryHandle(x, y, r, g, b, a) {
@@ -656,7 +750,7 @@ class Curve {
             gl.uniform1i(
                 Curve.BSplineProgramInfo.uniformLocations.knotIndex,
                 k); // I think this goes from degree to n - degree
-            
+
             gl.uniform1i(
                 Curve.BSplineProgramInfo.uniformLocations.degree,
                 this.degree);
@@ -719,9 +813,9 @@ class Curve {
                 gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
             }
 
-            
 
-        }   
+
+        }
 
     }
 
@@ -857,7 +951,7 @@ class Curve {
             this.selected ? this.selectedColor : this.deselectedColor);
 
         {
-            const vertexCount = (this.handleSamples * 6) * ( (this.controlPoints.length + this.temporaryPoint.length) / 3);
+            const vertexCount = (this.handleSamples * 6) * ((this.controlPoints.length + this.temporaryPoint.length) / 3);
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
             // gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
@@ -1014,7 +1108,7 @@ class Curve {
         if (this.showControlPoints) {
             this.drawControlPoints(projection, modelView, aspect, time);
         }
-        
+
         if (this.showCurve) {
             this.drawCurve(projection, modelView, aspect, time);
         }
