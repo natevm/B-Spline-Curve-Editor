@@ -57,7 +57,8 @@ class CurveEditor {
             this.backup();
         }
 
-        this.curves[0].select();
+        if (this.curves.length > 0)
+            this.curves[0].select();
 
         /* Setup Hammer Events / */
         var hammer = new Hammer(this.canvas, {
