@@ -46,12 +46,9 @@ class KnotEditor {
         this.handleRadius = 20;
         this.numHandleSamples = 30;
         this.numBasisSamples = 200;
-        this.knot_vector = [];
         this.line_needs_refresh = [];
 
-        this.numControlPoints = -1;
-        this.degree = -1;
-        this.order = -1;
+        this.curve = undefined;
 
         this.precomputed = [];
     }
@@ -118,6 +115,11 @@ class KnotEditor {
 
     }
 
+    setCurve(curve) {
+        this.curve = curve;
+        this.numBasisSamples = 1000 / curve.getDegree();
+    }
+ 
     panStart(x, y, deltaX, deltaY) {
         let selected = this.selectHandle(x - deltaX);
         if (selected != -1) {
@@ -134,29 +136,29 @@ class KnotEditor {
         let x_ = Math.min(1.0, Math.max(0.0, this.untransform(x - this.canvas.clientWidth * .5, 0.0, 0.0)[0])); // x / this.canvas.clientWidth)
         
         for (var i = 0; i < this.selectedKnot; ++i) {
-            if (this.knot_vector[i] > x_) {
-                this.knot_vector[i] = x_;
+            if (this.curve.knot_vector[i] > x_) {
+                this.curve.knot_vector[i] = x_;
                 /* Refresh effected lines */
-                for (var j = -this.order; j < this.order; ++j) {
+                for (var j = -this.curve.getOrder(); j < this.curve.getOrder(); ++j) {
                     if ((i + j < this.lines.length) && (i + j >= 0))
                         this.line_needs_refresh[i + j] = true;
                 }
             }
         }
 
-        this.knot_vector[this.selectedKnot] = x_;
+        this.curve.knot_vector[this.selectedKnot] = x_;
         /* refresh effected lines */
-        for (var i = -this.order; i < this.order; ++i) {
+        for (var i = -this.curve.getOrder(); i < this.curve.getOrder(); ++i) {
             if ((this.selectedKnot + i < this.lines.length) && ( this.selectedKnot + i >= 0))
                 this.line_needs_refresh[this.selectedKnot + i] = true;
         }
 
 
-        for (var i = this.selectedKnot + 1; i < this.knot_vector.length; ++i) {
-            if (this.knot_vector[i] < x_) {
-                this.knot_vector[i] = x_;
+        for (var i = this.selectedKnot + 1; i < this.curve.knot_vector.length; ++i) {
+            if (this.curve.knot_vector[i] < x_) {
+                this.curve.knot_vector[i] = x_;
                 /* refresh effected lines */
-                for (var j = -this.order; j < this.order; ++j) {
+                for (var j = -this.curve.getOrder(); j < this.curve.getOrder(); ++j) {
                     if ((i + j < this.lines.length) && (i + j >= 0))
                         this.line_needs_refresh[i + j] = true;
                 }
@@ -176,8 +178,8 @@ class KnotEditor {
         
         let x_ = this.transform(Math.max(0.0,this.untransform(x - this.canvas.clientWidth * .5, 0.0, 0.0)[0]), 0.0, 0.0)[0];
         // console.log("X" + x_)
-        for (var i = this.knot_vector.length - 1; i >=0; --i) {
-            let t_ = this.transform(this.knot_vector[i], 0.0, 0.0)[0];
+        for (var i = this.curve.knot_vector.length - 1; i >=0; --i) {
+            let t_ = this.transform(this.curve.knot_vector[i], 0.0, 0.0)[0];
             // console.log("T" + t_)
             if (Math.abs(x_ - t_) < this.handleRadius) {
                 return i;
@@ -195,8 +197,8 @@ class KnotEditor {
                     return this.precomputed[t][i][k];
 
         if (k == 0) {
-            var t_i = this.knot_vector[i];
-            var t_i_1 = this.knot_vector[i+1];
+            var t_i = this.curve.knot_vector[i];
+            var t_i_1 = this.curve.knot_vector[i+1];
             return ( (t_i <= t) && (t < t_i_1)) ? 1.0 : 0.0;
         }
         
@@ -207,8 +209,8 @@ class KnotEditor {
         var rightTerm = 0.0;
         
         if (leftBasis > 0.0) {
-            var t_i = this.knot_vector[i];
-            var t_i_k = this.knot_vector[i + k];
+            var t_i = this.curve.knot_vector[i];
+            var t_i_k = this.curve.knot_vector[i + k];
             var leftDenominator = t_i_k - t_i;
             if (leftDenominator > 0.0) {
                 var leftNumerator = t - t_i;
@@ -217,8 +219,8 @@ class KnotEditor {
         }
         
         if (rightBasis > 0.0) {
-            var t_i_1 = this.knot_vector[i + 1];
-            var t_i_k_1 = this.knot_vector[i + k + 1];
+            var t_i_1 = this.curve.knot_vector[i + 1];
+            var t_i_k_1 = this.curve.knot_vector[i + k + 1];
             var rightDenominator = t_i_k_1 - t_i_1;
             if (rightDenominator > 0.0) {
                 var rightNumerator = t_i_k_1 - t;
@@ -252,38 +254,33 @@ class KnotEditor {
         ];
     }
 
-    generateUniformFloatingKnotVector(numKnots, open = false) {
-        this.knot_vector = [];
+    generateUniformFloatingKnotVector(open = false) {
+        this.curve.knot_vector = [];
+        let numKnots = this.curve.getOrder() + this.curve.getNumCtlPoints();
         for (var i = 0; i < numKnots; ++i) {
-            this.knot_vector.push(i / (numKnots - 1) );
+            this.curve.knot_vector.push(i / (numKnots - 1) );
         }
 
         if (open) {
-            this.knot_vector[this.knot_vector.length - 1] = 1.1;
+            this.curve.knot_vector[this.curve.knot_vector.length - 1] = 1.1;
         }
 
         this.updateBasisFunctions()
-
     }
 
-    setDegree(degree) {
-        this.degree = degree;
-        this.order = degree + 1;
-        this.numBasisSamples = 1000 / degree;
-    }
-
-    setNumControlPoints(numControlPoints) {
-        this.numControlPoints = numControlPoints;
-    }
 
     updateBasisFunctions() {
+        if (this.gl == undefined) return;
+
         let start = Date.now();
 
-        if (this.lines.length != (this.numControlPoints + this.knot_vector.length)) {
+        let numControlPoints = this.curve.getNumCtlPoints();
+
+        if (this.lines.length != (numControlPoints + this.curve.knot_vector.length)) {
             this.lines = [];
 
             /* Add a line for each control point and each handle */
-            for (var i = 0; i < (this.numControlPoints + this.knot_vector.length); ++i) {
+            for (var i = 0; i < (numControlPoints + this.curve.knot_vector.length); ++i) {
                 this.lines[i] = new Line(this.gl, 0.0, 0.0);
                 this.line_needs_refresh[i] = true;
             }
@@ -292,13 +289,13 @@ class KnotEditor {
         this.precomputed = [];
 
         /* For each control point */
-        for (var i = 0; i < this.numControlPoints; ++i) {
-            if (!this.line_needs_refresh[i]) continue;
+        for (var i = 0; i < numControlPoints; ++i) {
+            // if (!this.line_needs_refresh[i]) continue;
             /* Sample the basis function throughout the domain */
             this.lines[i].points = [];
             for (var s = 0; s < this.numBasisSamples; ++s) { 
                 var t = (s / (this.numBasisSamples - 1.0));
-                var y = this.computeBasis(t, i, this.degree, this.knot_vector);
+                var y = this.computeBasis(t, i, this.curve.getDegree(), this.curve.knot_vector);
                 var x = (s / (this.numBasisSamples - 1.0));
 
                 var p = this.transform(x, y, 0);
@@ -309,16 +306,16 @@ class KnotEditor {
             }
 
             this.lines[i].updateBuffers(this.gl)
-            var rgb = hslToRgb(i * (1.0 / this.numControlPoints), .5, .5);;
+            var rgb = hslToRgb(i * (1.0 / numControlPoints), 1., .5);;
             this.lines[i].color = [rgb[0], rgb[1], rgb[2], 1.0];
             this.line_needs_refresh[i] = false;
         }
 
         /* Create a handle for each knot */
-        for (var i = 0; i < this.knot_vector.length ; ++i) {
-            let x = this.knot_vector[i];
+        for (var i = 0; i < this.curve.knot_vector.length ; ++i) {
+            let x = this.curve.knot_vector[i];
             let y = 0.0;
-            this.lines[this.numControlPoints + i].points = [];
+            this.lines[numControlPoints + i].points = [];
             for (var s = 0; s < this.numHandleSamples + 1; ++s) {
                 let angle = (s / (1.0 * this.numHandleSamples - 1)) * 2 * Math.PI;
                 let rad = this.handleRadius; // Change this when selecting
@@ -327,30 +324,30 @@ class KnotEditor {
                 p[0] += Math.cos(angle) * rad;
                 p[1] += Math.sin(angle) * rad;
 
-                this.lines[this.numControlPoints + i].points.push(p[0], p[1], p[2]);
-                this.lines[this.numControlPoints + i].points.push(p[0], p[1], p[2]);
+                this.lines[numControlPoints + i].points.push(p[0], p[1], p[2]);
+                this.lines[numControlPoints + i].points.push(p[0], p[1], p[2]);
 
                 
             }
-            this.lines[this.numControlPoints + i].updateBuffers(this.gl);
-            this.lines[this.numControlPoints + i].color = [1.0, 1.0, 1.0, 1.0];
+            this.lines[numControlPoints + i].updateBuffers(this.gl);
+            this.lines[numControlPoints + i].color = [1.0, 1.0, 1.0, 1.0];
         }
 
         let end = Date.now();
 
         /* Mechanism to keep fps at a reasonable rate. Not ideal, but sampling basis is expensive, would rather 
             have a high frame rate */
-        if (this.degree != 1) {
+        if (this.curve.getDegree() != 1) {
             if (end - start > 64) {
                 this.numBasisSamples -= 10;
             } else if (end - start < 16) {
                 this.numBasisSamples += 10;
+                this.numBasisSamples = Math.min(this.numBasisSamples, 1000);
                 for (var i = 0; i < this.lines.length; ++i) {
                     this.line_needs_refresh[i] = true;
                 }
             }
         }
-
     }
 
     clearWebGL() {
@@ -388,14 +385,12 @@ class KnotEditor {
 
         if (this.canvas == undefined) return;
         
-
         now *= 0.001;  // convert to seconds
         const deltaTime = now - this.then;
         this.then = now;
         let gl = this.gl;
 
         // let rgb = hslToRgb(Math.sin(now), 1., .5);
-
 
         /* Setup the projection */
         const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;

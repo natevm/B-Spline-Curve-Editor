@@ -5,21 +5,12 @@
 
       </div>
       <div flex="20">
+
           <md-content layout-padding>
-              <md-content layout="column" class="md-block">
-                <h2>Number of control points: {{data.numControlPoints}}</h2>
-              </md-content>
-              
-              <md-content layout="column" class="md-block">
-                <h2>Number of knots: {{data.numKnots}}</h2>
-              </md-content>
-              
-              
-              
-              <md-input-container class="md-block">
-                <label>Degree</label>
-                <input mdInput type="number" ng-model="data.degree" ng-change="updateDegree()" min="{{data.minDegree}}" max="{{data.maxDegree}}" />
-              </md-input-container>
+              <h2>Degree : {{data.degree}}</h2>
+              <md-button ng-click="increaseDegree()">Increase Degree</md-button>
+              <md-button ng-click="decreaseDegree()">Decrease Degree</md-button>
+              <md-button ng-click="makeUniform()">Make Uniform</md-button>
             </md-content>
       </div>
   </div>

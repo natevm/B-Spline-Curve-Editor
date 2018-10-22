@@ -159,7 +159,7 @@ angular
             zoom: 25,
             snappingEnabled: true,
             fullScreen: false,
-            insertionMode: 'front',
+            insertionMode: 'closest',
             designName: (localStorage.getItem("design_name") == undefined) ? "Untitled design" : localStorage.getItem("design_name")
         };
 
@@ -360,28 +360,42 @@ angular
     })
     .controller('GridBottomSheetCtrl', function($scope, $mdBottomSheet, $timeout) {
         $scope.data = {
-            degree: 1,
-            numControlPoints: curveEditor.getNumCtlPointsOfSelected(),
-            numKnots: 2 + curveEditor.getNumCtlPointsOfSelected(),
+            curve : curveEditor.getSelectedCurve(),
+            degree: curveEditor.getSelectedCurve().getDegree(),
             minDegree: 1,
             maxDegree: curveEditor.getNumCtlPointsOfSelected() - 1
         };
         $timeout(function () {
             knotEditor.initializeWebGL();            
-            knotEditor.setNumControlPoints($scope.data.numControlPoints);
-            knotEditor.setDegree($scope.data.degree);
-            knotEditor.generateUniformFloatingKnotVector($scope.data.numKnots);
+            knotEditor.setCurve($scope.data.curve);
             knotEditor.updateBasisFunctions();
+            curveEditor.backup();
         });
         $scope.listItemClick = function() {
         };
         $scope.$on("$destroy", function() {
             knotEditor.clearWebGL();
+            curveEditor.backup();
         });
         $scope.updateDegree = function() {
-            $scope.data.numKnots = $scope.data.degree + 1 + curveEditor.getNumCtlPointsOfSelected();
-            knotEditor.setDegree($scope.data.degree);
-            knotEditor.generateUniformFloatingKnotVector($scope.data.numKnots);
+            $scope.data.curve.setDegree($scope.data.degree);
+            // knotEditor.generateUniformFloatingKnotVector();
             knotEditor.updateBasisFunctions();
+            curveEditor.backup();
+        }
+        $scope.increaseDegree = function() {
+            if ($scope.data.degree < $scope.data.maxDegree) {
+                $scope.data.degree++;
+            }
+            $scope.updateDegree();
+        }
+        $scope.decreaseDegree = function() {
+            if ($scope.data.degree > $scope.data.minDegree) {
+                $scope.data.degree--;
+            }
+            $scope.updateDegree();
+        }
+        $scope.makeUniform = function() {
+            knotEditor.generateUniformFloatingKnotVector();
         }
     });

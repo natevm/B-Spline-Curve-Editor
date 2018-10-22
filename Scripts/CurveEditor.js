@@ -297,7 +297,7 @@ class CurveEditor {
             }
             else {
                 let handlePos = this.curves[this.selectedCurve].getHandlePos(ctl_idx);
-                this.curves[this.selectedCurve].setTemporaryHandle(handlePos[0], handlePos[1], 1.0, 0.0, 0.0, 1.0);
+                this.curves[this.selectedCurve].setTemporaryHandle(handlePos[0], handlePos[1], .6, 0.0, 0.0, 1.0);
                 deleting = true;
             }
         }
@@ -538,6 +538,14 @@ class CurveEditor {
             return -1;
         else {
             return this.curves[this.selectedCurve].getNumCtlPoints();
+        }
+    }
+
+    getSelectedCurve() {
+        if (this.selectedCurve == -1)
+            return -1;
+        else {
+            return this.curves[this.selectedCurve];
         }
     }
 }
