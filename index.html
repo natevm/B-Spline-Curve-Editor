@@ -160,6 +160,7 @@
                                         <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
+                                
                                 <md-menu-divider></md-menu-divider>
                                 <md-menu-item type="checkbox" ng-model="ctrl.settings.showControlPolygon" ng-click="ctrl.updateVisibility($event)">Show
                                     Control Polygon</md-menu-item>
@@ -170,16 +171,21 @@
                                 <md-menu-divider></md-menu-divider>
                                 <md-menu-item type="checkbox" ng-model="ctrl.settings.fullScreen" ng-click="ctrl.toggleFullScreen($event)"
                                     nv>Full screen</md-menu-item>
+                                    <md-menu-divider></md-menu-divider>
+                                    <md-menu-item>
+                                        <md-slider style="width: 100%" class="zoomSlider" ng-model="ctrl.settings.zoom" ng-change="ctrl.updateZoom()"
+                                        min="100" max="10000" aria-label="regular slider"></md-slider>
+                                    </md-menu-item>
                             </md-menu-content>
                         </md-menu>
 
                         <span flex></span>
 
-                        <md-slider-container flex=60>
+                        <md-slider-container flex=60 flex-sm="40" hide-xs>
                             <md-tooltip md-direction="bottom">Zoom</md-tooltip>
-                            <div hide-sm hide-xs flex="20" layout layout-align="center center">
+                            <!-- <div hide-sm hide-xs flex="20" layout layout-align="center center">
                                 <span class="md-body-1">Zoom</span>
-                            </div>
+                            </div> -->
                             <md-slider style="width: 100%" class="zoomSlider" ng-model="ctrl.settings.zoom" ng-change="ctrl.updateZoom()"
                                 min="100" max="10000" aria-label="regular slider"></md-slider>
                         </md-slider-container>
