@@ -170,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         knot[j] /= (max - min);
                     }
                     curves[i].knot_vector = knot;
+                    lines = lines.splice(1)
                 }
 
 
@@ -412,14 +413,26 @@ angular
                 }
             }
 
-            var text = ""
+            var text = "# Number of curves: \n"
             text += curveEditor.curves.length + "\n"
             for (var i = 0; i < curveEditor.curves.length; ++i) {
-                text += "P " + (curveEditor.curves[i].controlPoints.length / 3) + "\n";
-                for (var j = 0; j < curveEditor.curves[i].controlPoints.length / 3; ++j) {
+                text += "\n# Curve " + i + "\n";
+                text += "# Degree: \n";
+                text += curveEditor.curves[i].getDegree() + "\n";
+                text += "# Number of control points: \n";
+                text += curveEditor.curves[i].getNumCtlPoints() + "\n";
+                text += "# Control point data: \n";
+                for (var j = 0; j < curveEditor.curves[i].getNumCtlPoints(); ++j) {
                     text += curveEditor.curves[i].controlPoints[j * 3 + 0] / 50.0 + "    ";
                     text += curveEditor.curves[i].controlPoints[j * 3 + 1] / -50.0 + "\n"
                 }
+                text += "# Knot present: \n";
+                text += "1 \n";
+                text += "# Knot data: \n";
+                for (var j = 0; j < curveEditor.curves[i].knot_vector.length; ++j) {
+                    text += curveEditor.curves[i].knot_vector[j] + " ";
+                }
+                text += "\n";
             }
             download(text, this.settings.designName + ".dat", "text");
         };
