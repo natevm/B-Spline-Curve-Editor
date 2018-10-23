@@ -23,7 +23,9 @@
 html, body {
     width: 100%;
     height: var(--LandscapeTotalHeight);
+    overflow: hidden;
 }
+
 
 #glCanvas {
     width: 100%;
