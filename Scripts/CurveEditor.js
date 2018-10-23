@@ -71,7 +71,8 @@ class CurveEditor {
 
         hammer.get('pan').set({
             threshold: 10,
-            threshold: 9
+            threshold: 9,
+            direction: Hammer.DIRECTION_ALL
         });
 
         /* Pan */
