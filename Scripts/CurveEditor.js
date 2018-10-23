@@ -3,7 +3,7 @@ import { Curve } from "./Curve.js"
 class CurveEditor {
     constructor() {
         this.pointJustAdded = false;
-        this.selectedCurve = 0;
+        this.selectedCurve = -1;
         this.selectedHandle = -1;
         this.showCurves = true;
         this.showControlPolygons = true;
@@ -14,11 +14,11 @@ class CurveEditor {
         this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
         this.position = { x: 0, y: 0 };
         this.originalPosition = { x: 0, y: 0 };
-        this.zoom = 0.5;
+        this.zoom = 2.0;
         this.addMode = 0;
         this.addToFront = false;
-        this.addToBack = false;
-        this.addToClosest = true;
+        this.addToBack = true;
+        this.addToClosest = false;
         this.snappingEnabled = true;
         this.zooming = false;
         this.panning = false;
@@ -57,8 +57,8 @@ class CurveEditor {
             this.backup();
         }
 
-        if (this.curves.length > 0)
-            this.curves[0].select();
+        // if (this.curves.length > 0)
+        //     this.curves[0].select();
 
         /* Setup Hammer Events / */
         var hammer = new Hammer(this.canvas, {
@@ -76,23 +76,33 @@ class CurveEditor {
 
         /* Pan */
         hammer.on('panstart', (e) => {
-            if (this.zooming) return;
+            var bb = e.target.getBoundingClientRect();
             this.panStart(
-                (e.changedPointers[0].clientX / this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
-                (e.changedPointers[0].clientY / this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom)),
-                e.deltaX / this.zoom,
-                e.deltaY / this.zoom);
+                (e.center.x - bb.left) / this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom),
+                (e.center.y - bb.top) / this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom),
+                e.deltaX / this.zoom, e.deltaY / this.zoom);
         });
         hammer.on('pan', (e) => {
-            if (this.zooming) return;
+            var bb = e.target.getBoundingClientRect();
+            /* Weird bug where centerx and y are zero, flying you off the screen... */
+            if ((e.center.x == 0) && (e.center.y == 0)) {
+                this.panEnd();
+                console.log(e)
+                return;
+            }
+
             this.pan(
-                (e.changedPointers[0].clientX / this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
-                (e.changedPointers[0].clientY / this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom)),
-                e.deltaX / this.zoom,
-                e.deltaY / this.zoom);
+                (e.center.x - bb.left) / this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom),
+                (e.center.y - bb.top) / this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom),
+                e.deltaX / this.zoom, e.deltaY / this.zoom);
+
+            // this.pan(
+            //     (e.changedPointers[0].clientX / this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom)),
+            //     (e.changedPointers[0].clientY / this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom)),
+            //     e.deltaX / this.zoom,
+            //     e.deltaY / this.zoom);
         });
         hammer.on('panend', (e) => {
-            if (this.zooming) return;
             this.panEnd();
         });
 
@@ -439,6 +449,13 @@ class CurveEditor {
         const modelViewMatrix = mat4.create();
         mat4.translate(modelViewMatrix, modelViewMatrix, [this.position.x, this.position.y, -1.0]);
 
+        /* Resize lines */
+        for (let i = 0; i < this.curves.length; ++i) {
+            this.curves[i].handleRadius = 30 / this.zoom;
+            this.curves[i].handleThickness = 5 / this.zoom;
+            this.curves[i].thickness = 5 / this.zoom;
+        }
+
         /* Draw all unselected curves */
         for (let i = 0; i < this.curves.length; ++i) {
             if (!this.curves[i].selected)
@@ -531,7 +548,7 @@ class CurveEditor {
     resetCamera() {
         this.position = { x: 0, y: 0 };
         this.originalPosition = { x: 0, y: 0 };
-        this.zoom = 0.5;
+        this.zoom = 2.0;
     }
 
     getNumCtlPointsOfSelected() {

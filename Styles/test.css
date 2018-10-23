@@ -75,3 +75,41 @@
       -ms-user-select: none;
       user-select: none;
     }
+
+    md-backdrop.md-opaque {
+      opacity: 0.0 !important;
+    }
+
+    md-toast.md-default-theme .md-toast-content, md-toast .md-toast-content {
+      background-color: rgb(34, 34, 34);
+      border-style: solid;
+      border-width: 3px;
+      border-color: #2b9a2b;
+    }
+
+    .md-toast-text {
+      font-weight: bolder;
+      color: rgb(255, 255, 255);
+    }
+
+    .bottomSheetControlContainer {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      align-content: center;
+      text-align: center;
+      height: 100%;
+    }
+
+    .bottomSheetControls {
+      display: flex;
+      justify-content: space-evenly;
+      flex-wrap: wrap;
+    }
+
+    .degreeEditor {
+      display: flex;
+      justify-content: space-evenly;
+      flex-direction: row;
+
+    }

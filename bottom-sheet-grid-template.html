@@ -1,24 +1,37 @@
 <md-bottom-sheet style="position: fixed">
   <div layout="row" layout-wrap>
-    <div flex="75" style="height: 100%;">
+    <div flex="75" flex-sm="30" flex-xs="30">
       <canvas id="knotCanvas"></canvas>
-
     </div>
-    <div flex="25">
 
-      <md-content layout-padding>
-        <h2>Degree : {{data.degree}}</h2>
-        <md-button class="md-raised md-primary" ng-click="increaseDegree()">Increase Degree</md-button>
-        <md-button class="md-raised md-primary" ng-click="decreaseDegree()">Decrease Degree</md-button>
-        <!-- <md-button ng-click="makeOpenUniform()">Make Open Uniform</md-button> -->
-        <!-- <md-button ng-click="makeFloatingUniform()">Make Floating Uniform</md-button> -->
+    <div flex="25" flex-sm="70" flex-xs="70">
 
-        <md-checkbox name="tos" ng-model="data.makeOpen" ng-change="updateOpenProperty()" >
-          Make Open
-        </md-checkbox>
-        <md-checkbox name="tos" ng-model="data.makeUniform" ng-change="updateUniformProperty()">
-          Make Uniform
-        </md-checkbox>
+      <md-content class="bottomSheetControlContainer" layout-padding>
+        <md-content class="degreeEditor">
+          <md-button class="md-icon-button" aria-label="More" ng-click="decreaseDegree()">
+            <!-- <md-tooltip md-direction="bottom">Increase Degree</md-tooltip> -->
+            <md-icon md-svg-icon="img/icons/minus.svg"></md-icon>
+          </md-button>
+
+          <h2>Degree : {{data.degree}}</h2>
+
+          <md-button class="md-icon-button" aria-label="More" ng-click="increaseDegree()">
+            <!-- <md-tooltip md-direction="bottom">Increase Degree</md-tooltip> -->
+            <md-icon md-svg-icon="img/icons/add.svg"></md-icon>
+          </md-button>
+        </md-content>
+
+        <md-content class="bottomSheetControls">
+          <!-- <md-button ng-click="makeOpenUniform()">Make Open Uniform</md-button> -->
+          <!-- <md-button ng-click="makeFloatingUniform()">Make Floating Uniform</md-button> -->
+
+          <md-checkbox name="tos" ng-model="data.makeOpen" ng-change="updateOpenProperty()">
+            Make Open
+          </md-checkbox>
+          <md-checkbox name="tos" ng-model="data.makeUniform" ng-change="updateUniformProperty()">
+            Make Uniform
+          </md-checkbox>
+        </md-content>
       </md-content>
     </div>
   </div>

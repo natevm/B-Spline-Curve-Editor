@@ -46,15 +46,8 @@ vec3 bernstein3(float n, float k, float t1, float t2, float t3) {
     p: degree of B-spline
 */
 vec3 deBoor(int k, float x, int p) {
-    // k += 1;
-    /* Upper limit is 128. */
+    /* Upper limit is 100. */
     vec3 d[100];
-
-    // for (int i = 0; i < 128; ++i) {
-    //     if (i == p) {
-    //         d[i] = vec3(1.0, 0.0, 0.0);
-    //     }
-    // }
     
     /* initialize d (control points extracted on host) */
     for (int j = 0; j <= 100; ++j) {
@@ -62,19 +55,16 @@ vec3 deBoor(int k, float x, int p) {
         d[j] = uControlPoints[j]; 
     }
 
-    for (int r = 1; r <= 128; ++r) {
+    for (int r = 1; r <= 100; ++r) {
         if (p+1 < r) break;
 
-        for (int j = 128; j >= 0; --j) {
-
+        for (int j = 100; j >= 0; --j) {
+            if (j > p) continue;
             if (j < r) break;
 
             if (j <= p) {
                 float alpha = (x - uKnotVector[j+k-p]) / (uKnotVector[j+1+k-r] - uKnotVector[j+k-p]);
-                // float alpha = (uKnotVector[j+1+k-r] - uKnotVector[j+k-p]);
-                // alpha = ( alpha > 1.0) ? 0.0 : 1.0;//(uKnotVector[j+1+k-r] - uKnotVector[j+k-p]);
                 d[j] = (1.0 - alpha) * d[j-1] + alpha * d[j];
-                // break;
             }
         }
     }
@@ -93,28 +83,10 @@ void main(void) {
     float tPrev = max(tNow - .001, tMin);
     float tNext = min(tNow + .001, tMax);
 
-    vec3 previous = vec3(0.0, 0.0, 0.0);
-    vec3 position = vec3(0.0, 0.0, 0.0);
-    vec3 next = vec3(0.0, 0.0, 0.0);
-
     /* Position computation */
-    previous = deBoor(knot_index, tPrev, degree);
-    position = deBoor(knot_index, tNow, degree);
-    next = deBoor(knot_index, tNext, degree);
-
-
-    // int n = uNumControlPoints - 1;
-    // for (int i = 0; i <= 128; ++i) {
-    //     if (i > n) break;
-    //     vec3 p_i = uControlPoints[i];
-    //     vec3 theta = bernstein3(float(n), float(i), tPrev, tNow, tNext);
-    //     previous += p_i * theta[0];
-    //     position += p_i * theta[1];
-    //     next += p_i * theta[2];
-    // }
-
-
-
+    vec3 previous = deBoor(knot_index, tPrev, degree);
+    vec3 position = deBoor(knot_index, tNow, degree);
+    vec3 next = deBoor(knot_index, tNext, degree);
 
     /* Line code */
     float len = thickness;
@@ -153,7 +125,7 @@ void main(void) {
     gl_PointSize = 1.0;
 
     normal = normalize(normal);
-    vColor = vec4(abs(normal.x), abs(normal.y), abs(.5 - normal.x * normal.y), 1.0);
-    // vColor = vec4(1.0, 0.0, 0.0, 1.0);
+    vColor = vec4(abs(normal.x), abs(normal.y), abs(normal.z), 1.0);
+    // vColor = vec4(1.0, 1.0, 1.0, 1.0);
     // vOffset = offset;
 }

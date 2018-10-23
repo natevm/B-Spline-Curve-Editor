@@ -25,7 +25,7 @@
                     <h2 class="md-toolbar-tools">{{ ctrl.settings.designName }}</h2>
                     <md-menu-bar style="display: flex;">
                         <md-menu>
-                            <button ng-click="$mdMenu.open()">
+                            <button ng-click="$mdMenu.open()" hide-xs>
                                 File
                             </button>
                             <md-menu-content>
@@ -46,11 +46,18 @@
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-item>
-                                    <md-button onclick="document.getElementById('UploadFile').click();">
-                                        Import Design...
+                                    <md-button onclick="document.getElementById('UploadBezierFile').click();">
+                                        Import Bezier Design...
                                         <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span>
                                     </md-button>
-                                    <input class="ng-hide" id="UploadFile" type="file" />
+                                    <input class="ng-hide" id="UploadBezierFile" type="file" />
+                                </md-menu-item>
+                                <md-menu-item>
+                                    <md-button onclick="document.getElementById('UploadBSplineFile').click();">
+                                        Import B-Spline Design...
+                                        <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span>
+                                    </md-button>
+                                    <input class="ng-hide" id="UploadBSplineFile" type="file" />
                                 </md-menu-item>
                                 <md-menu-item>
                                     <md-button ng-click="ctrl.save($event)">
@@ -165,47 +172,62 @@
                                     nv>Full screen</md-menu-item>
                             </md-menu-content>
                         </md-menu>
-                        <md-menu>
-                            <md-button ng-click="ctrl.showHelp($event)">
-                                Help
-                            </md-button>
-                            <md-menu-content></md-menu-content>
-                        </md-menu>
+
                         <span flex></span>
-                        
-                        <md-slider-container>
-                            <div flex="20" layout layout-align="center center">
+
+                        <md-slider-container flex=60>
+                            <md-tooltip md-direction="bottom">Zoom</md-tooltip>
+                            <div hide-sm hide-gt-xs hide-xs flex="20" layout layout-align="center center">
                                 <span class="md-body-1">Zoom</span>
                             </div>
-                            <md-slider class="zoomSlider" ng-model="ctrl.settings.zoom" ng-change="ctrl.updateZoom()"
-                            min="5" max="100" aria-label="regular slider"></md-slider>
+                            <md-slider style="width: 100%" class="zoomSlider" ng-model="ctrl.settings.zoom" ng-change="ctrl.updateZoom()"
+                                min="100" max="10000" aria-label="regular slider"></md-slider>
                         </md-slider-container>
-                    
-                        <md-menu>
-                            <md-button ng-click="ctrl.resetCamera($event)">
+
+                        <!-- <md-menu>
+                            <md-button class="md-raised" ng-click="ctrl.resetCamera($event)">
                                 Reset Camera
                             </md-button>
                             <md-menu-content></md-menu-content>
-                        </md-menu>
+                        </md-menu> -->
 
                         <span flex></span>
                         <md-menu>
-                            <md-button ng-click="openBottomSheet($event)">
-                                Edit Knot
+                            <md-button class="md-icon-button" aria-label="More" ng-click="openBottomSheet($event)">
+                                <md-tooltip md-direction="bottom">Open Knot Editor</md-tooltip>
+                                <md-icon md-svg-icon="img/icons/abacus.svg"></md-icon>
                             </md-button>
                             <md-menu-content></md-menu-content>
                         </md-menu>
 
                         <md-menu>
-                            <md-button ng-click="ctrl.addCurve($event)">
-                                Add Curve
+                            <md-button class="md-icon-button" aria-label="More" ng-click="ctrl.addCurve($event)">
+                                <md-tooltip md-direction="bottom">Add Curve</md-tooltip>
+                                <md-icon md-svg-icon="img/icons/add.svg"></md-icon>
                             </md-button>
                             <md-menu-content></md-menu-content>
                         </md-menu>
 
                         <md-menu>
-                            <md-button ng-click="ctrl.deleteCurve($event)">
-                                Delete Curve
+                            <md-button class="md-icon-button" aria-label="More" ng-click="ctrl.deleteCurve($event)">
+                                <md-tooltip md-direction="bottom">Delete Curve</md-tooltip>
+                                <md-icon md-svg-icon="img/icons/rubbish-bin.svg"></md-icon>
+                            </md-button>
+                            <md-menu-content></md-menu-content>
+                        </md-menu>
+
+                        <md-menu hide-sm hide-gt-xs hide-xs>
+                            <md-button class="md-icon-button" aria-label="More" ng-click="ctrl.showHelp($event)">
+                                <md-tooltip md-direction="bottom">Show help</md-tooltip>
+                                <md-icon md-svg-icon="img/icons/information.svg"></md-icon>
+                            </md-button>
+                            <md-menu-content></md-menu-content>
+                        </md-menu>
+
+                        <md-menu hide-sm hide-gt-xs hide-xs>
+                            <md-button class="md-icon-button" aria-label="More" ng-click="ctrl.toggleFullScreen($event, true)">
+                                <md-tooltip md-direction="bottom">Go Fullscreen</md-tooltip>
+                                <md-icon md-svg-icon="img/icons/fullscreen.svg"></md-icon>
                             </md-button>
                             <md-menu-content></md-menu-content>
                         </md-menu>

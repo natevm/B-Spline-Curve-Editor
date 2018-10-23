@@ -193,6 +193,7 @@ class Curve {
         this.degree = (obj == null) ? 1 : obj.degree;
         this.knot_vector = (obj == null) ? [0.0, .33, .66, 1.0] : obj.knot_vector;
 
+        this.updateConstraints();
         this.updateBuffers();
     }
 
@@ -568,6 +569,9 @@ class Curve {
         this.controlPoints.splice(handleIdx * 3, 3);
         this.knot_vector.splice(handleIdx, 1);
         this.selectedHandle = -1;
+        if (this.getOrder() > this.getNumCtlPoints() ) {
+            this.setDegree(this.getDegree() - 1);
+        }
 
         this.updateConstraints();
     }

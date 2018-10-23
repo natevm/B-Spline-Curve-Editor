@@ -45,7 +45,7 @@ class KnotEditor {
         this.position = { x: 0, y: 0 };
         this.handleRadius = 20;
         this.numHandleSamples = 30;
-        this.numBasisSamples = 200;
+        this.numBasisSamples = 100;
         this.line_needs_refresh = [];
 
         this.curve = undefined;
@@ -172,7 +172,12 @@ class KnotEditor {
     }
 
     panEnd() {
+        this.curve.updateConstraints();
         this.selectedKnot = -1;
+        for (var i = 0; i < this.line_needs_refresh.length; ++i) {
+            this.line_needs_refresh[i] = true;
+        }
+        this.updateBasisFunctions();
     }
 
     selectHandle(x) {
@@ -191,8 +196,8 @@ class KnotEditor {
             if (Math.abs(x_ - t_) < this.handleRadius) {
                 /* Dont allow manipulating ends when open */
                 if ((this.curve.isOpen) &&
-                    (i >= this.curve.getNumCtlPoints())
-                    || (i <= this.curve.getDegree())) {
+                    ((i >= this.curve.getNumCtlPoints())
+                    || (i <= this.curve.getDegree()))) {
                     continue;
                 }
 
@@ -358,7 +363,20 @@ class KnotEditor {
 
             }
             this.lines[numControlPoints + i].updateBuffers(this.gl);
+
             this.lines[numControlPoints + i].color = [1.0, 1.0, 1.0, 1.0];
+            if (this.curve.isUniform) {
+                this.lines[numControlPoints + i].color = [.6, .6, .6, .6];
+            } 
+            
+            if ((this.curve.isOpen) &&
+                    ((i >= this.curve.getNumCtlPoints())
+                    || (i <= this.curve.getDegree()))) {
+                    this.lines[numControlPoints + i].color = [.6, .6, .6, .6];
+                }
+            
+
+            
         }
 
         let end = Date.now();
@@ -366,11 +384,11 @@ class KnotEditor {
         /* Mechanism to keep fps at a reasonable rate. Not ideal, but sampling basis is expensive, would rather 
             have a high frame rate */
         if (this.curve.getDegree() != 1) {
-            if (end - start > 64) {
+            if (end - start > 32) {
                 this.numBasisSamples -= 10;
             } else if (end - start < 16) {
                 this.numBasisSamples += 10;
-                this.numBasisSamples = Math.min(this.numBasisSamples, 1000);
+                this.numBasisSamples = Math.min(this.numBasisSamples, 200);
                 for (var i = 0; i < this.lines.length; ++i) {
                     this.line_needs_refresh[i] = true;
                 }
