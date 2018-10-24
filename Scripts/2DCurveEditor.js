@@ -453,8 +453,8 @@ class CurveEditor {
         /* Resize lines */
         for (let i = 0; i < this.curves.length; ++i) {
             this.curves[i].handleRadius = 30 / this.zoom;
-            this.curves[i].handleThickness = .0025;//5 / this.zoom;
-            this.curves[i].thickness = .0025;//5 / this.zoom;
+            this.curves[i].handleThickness = .005;//5 / this.zoom;
+            this.curves[i].thickness = .005;//5 / this.zoom;
         }
 
         /* Draw all unselected curves */
