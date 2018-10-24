@@ -341,7 +341,7 @@ class CurveEditor {
         let up = vec3.create();
         vec3.set(eye, 0.0, 0.0, 1.0)
         vec3.set(center, 0.0, 0.0, 0.0)
-        vec3.set(up, 0.0, 1.0, 0.0)
+        vec3.set(up, 0.0, -1.0, 0.0)
         mat4.lookAt(view, eye, center, up);
         mat4.multiply(perspectiveMatrix, perspectiveMatrix, view);
         mat4.scale(perspectiveMatrix, perspectiveMatrix, [1.0/this.zoom, 1.0/this.zoom, 1.0/this.zoom]);
@@ -351,7 +351,7 @@ class CurveEditor {
         
 
         const modelViewMatrix = mat4.create();
-        mat4.rotate(modelViewMatrix, modelViewMatrix, this.rotX + now * .2, [0, 1, 0]);
+        mat4.rotate(modelViewMatrix, modelViewMatrix, -this.rotX + now * .2, [0, 1, 0]);
         // mat4.rotate(modelViewMatrix, modelViewMatrix, this.rotY, [1, 0, 0]);
 
         this.rotX += this.deltaX;
