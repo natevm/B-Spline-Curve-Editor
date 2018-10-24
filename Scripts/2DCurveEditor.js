@@ -14,7 +14,7 @@ class CurveEditor {
         this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
         this.position = { x: 0, y: 0 };
         this.originalPosition = { x: 0, y: 0 };
-        this.zoom = 2.0;
+        this.zoom = 500.0;
         this.addMode = 0;
         this.addToFront = false;
         this.addToBack = true;
@@ -170,7 +170,7 @@ class CurveEditor {
     }
 
     updateZoom(zoomAmount) {
-        this.zoom = zoomAmount;
+        this.zoom = Math.pow(10, zoomAmount);
     }
 
     setShortcutsEnabled(enabled) {
@@ -441,7 +441,7 @@ class CurveEditor {
         /* Setup the projection */
         const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         const orthoMatrix = mat4.create();
-        mat4.ortho(orthoMatrix, -gl.canvas.clientWidth, gl.canvas.clientWidth, gl.canvas.clientHeight, -gl.canvas.clientHeight, -1.0, 1.0)
+        mat4.ortho(orthoMatrix, -gl.canvas.clientWidth, gl.canvas.clientWidth, gl.canvas.clientHeight, -gl.canvas.clientHeight, -100.0, 100.0)
         let zoom = vec3.create();
         vec3.set(zoom, this.zoom, this.zoom, 1.0);
         mat4.scale(orthoMatrix, orthoMatrix, zoom);
@@ -453,8 +453,8 @@ class CurveEditor {
         /* Resize lines */
         for (let i = 0; i < this.curves.length; ++i) {
             this.curves[i].handleRadius = 30 / this.zoom;
-            this.curves[i].handleThickness = 5 / this.zoom;
-            this.curves[i].thickness = 5 / this.zoom;
+            this.curves[i].handleThickness = .0025;//5 / this.zoom;
+            this.curves[i].thickness = .0025;//5 / this.zoom;
         }
 
         /* Draw all unselected curves */
@@ -549,7 +549,7 @@ class CurveEditor {
     resetCamera() {
         this.position = { x: 0, y: 0 };
         this.originalPosition = { x: 0, y: 0 };
-        this.zoom = 2.0;
+        this.zoom = 500.0;
     }
 
     getNumCtlPointsOfSelected() {

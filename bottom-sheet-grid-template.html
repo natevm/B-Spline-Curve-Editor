@@ -25,12 +25,12 @@
           <!-- <md-button ng-click="makeOpenUniform()">Make Open Uniform</md-button> -->
           <!-- <md-button ng-click="makeFloatingUniform()">Make Floating Uniform</md-button> -->
 
-          <md-checkbox name="tos" ng-model="data.makeOpen" ng-change="updateOpenProperty()">
-            Make Open
-          </md-checkbox>
-          <md-checkbox name="tos" ng-model="data.makeUniform" ng-change="updateUniformProperty()">
-            Make Uniform
-          </md-checkbox>
+          <md-switch class="md-primary" name="tos" ng-model="data.makeOpen" ng-change="updateOpenProperty()">
+            Force Open
+          </md-switch>
+          <md-switch class="md-primary" name="tos" ng-model="data.makeUniform" ng-change="updateUniformProperty()">
+            Force Uniform
+          </md-switch>
         </md-content>
       </md-content>
     </div>

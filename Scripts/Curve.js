@@ -173,11 +173,10 @@ class Curve {
         this.showCurve = true;
         this.showControlPolygon = true;
         this.showControlPoints = true;
-        this.numSamples = 200;
         this.thickness = (obj == null) ? 10.0 : obj.thickness;
         this.controlPoints = (obj == null) ? [
-            -100.0 + x, y, 0.0,
-            100.0 + x, y, 0.0,
+            -.5 + x, y, 0.0,
+            .5 + x, y, 0.0,
         ] : obj.controlPoints;
         this.temporaryPoint = []
 
@@ -192,6 +191,7 @@ class Curve {
         this.isUniform = (obj == null) ?  true : obj.isUniform;
         this.degree = (obj == null) ? 1 : obj.degree;
         this.knot_vector = (obj == null) ? [0.0, .33, .66, 1.0] : obj.knot_vector;
+        this.numSamples = 2 * this.degree + 20;
 
         this.updateConstraints();
         this.updateBuffers();
@@ -246,6 +246,7 @@ class Curve {
             this.degree = degree;
         else return;
 
+        this.numSamples = 2 * this.degree + 20;
         if (this.knot_vector == undefined) {
             this.knot_vector = [];
         }
@@ -427,14 +428,14 @@ class Curve {
                     rad *= 1.2;
                 }
 
-                handlePointsPrev.push(temppts[i * 3 + 0] + Math.cos(degreePrev) * rad, temppts[i * 3 + 1] + Math.sin(degreePrev) * rad, 0.0);
-                handlePointsPrev.push(temppts[i * 3 + 0] + Math.cos(degreePrev) * rad, temppts[i * 3 + 1] + Math.sin(degreePrev) * rad, 0.0);
+                handlePointsPrev.push(temppts[i * 3 + 0] + Math.cos(degreePrev) * rad, temppts[i * 3 + 1] + Math.sin(degreePrev) * rad, temppts[i * 3 + 2]);
+                handlePointsPrev.push(temppts[i * 3 + 0] + Math.cos(degreePrev) * rad, temppts[i * 3 + 1] + Math.sin(degreePrev) * rad, temppts[i * 3 + 2]);
 
-                handlePoints.push(temppts[i * 3 + 0] + Math.cos(degree) * rad, temppts[i * 3 + 1] + Math.sin(degree) * rad, 0.0);
-                handlePoints.push(temppts[i * 3 + 0] + Math.cos(degree) * rad, temppts[i * 3 + 1] + Math.sin(degree) * rad, 0.0);
+                handlePoints.push(temppts[i * 3 + 0] + Math.cos(degree) * rad, temppts[i * 3 + 1] + Math.sin(degree) * rad, temppts[i * 3 + 2]);
+                handlePoints.push(temppts[i * 3 + 0] + Math.cos(degree) * rad, temppts[i * 3 + 1] + Math.sin(degree) * rad, temppts[i * 3 + 2]);
 
-                handlePointsNext.push(temppts[i * 3 + 0] + Math.cos(degreeNext) * rad, temppts[i * 3 + 1] + Math.sin(degreeNext) * rad, 0.0);
-                handlePointsNext.push(temppts[i * 3 + 0] + Math.cos(degreeNext) * rad, temppts[i * 3 + 1] + Math.sin(degreeNext) * rad, 0.0);
+                handlePointsNext.push(temppts[i * 3 + 0] + Math.cos(degreeNext) * rad, temppts[i * 3 + 1] + Math.sin(degreeNext) * rad, temppts[i * 3 + 2]);
+                handlePointsNext.push(temppts[i * 3 + 0] + Math.cos(degreeNext) * rad, temppts[i * 3 + 1] + Math.sin(degreeNext) * rad, temppts[i * 3 + 2]);
 
                 handlePointsDirection.push(-1, 1 * (this.selectedHandle == i) ? 4 : 1);
 
@@ -743,9 +744,9 @@ class Curve {
                 Curve.BSplineProgramInfo.uniformLocations.thickness,
                 this.thickness);
 
-            // gl.uniform1f(
-            //     Curve.BSplineProgramInfo.uniformLocations.aspect,
-            //     aspect);
+            gl.uniform1f(
+                Curve.BSplineProgramInfo.uniformLocations.aspect,
+                aspect);
 
             gl.uniform1i(
                 Curve.BSplineProgramInfo.uniformLocations.miter,

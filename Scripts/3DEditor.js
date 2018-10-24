@@ -1,199 +1,12 @@
-import { CurveEditor } from "./CurveEditor.js"
+import { CurveEditor } from "./3DCurveEditor.js"
 import { KnotEditor } from "./KnotEditor.js"
 import { Curve } from "./Curve.js"
 
-/* Is this required? */
 let curveEditor;
 let knotEditor;
+let knotEditorOpen = false;
 
-const render = function (time) {
-    curveEditor.render(time);
-    knotEditor.render(time);
-    requestAnimationFrame(render);
-};
-
-function cleanArray(actual) {
-    var newArray = new Array();
-    for (var i = 0; i < actual.length; i++) {
-        var temp = actual[i].trim()
-        if (temp.indexOf('#') != -1) {
-            temp = temp.substring(0, temp.indexOf('#'));
-        }
-        if (temp && temp.length >= 1) {
-            newArray.push(temp);
-        }
-    }
-    return newArray;
-}
-
-function assert(condition, message) {
-    if (!condition) {
-        message = message || "Assertion failed";
-        if (typeof Error !== "undefined") {
-            throw new Error(message);
-        }
-        throw message; // Fallback
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    curveEditor = new CurveEditor();
-    knotEditor = new KnotEditor();
-    requestAnimationFrame(render);
-
-    var UploadBezierFileButton = document.getElementById("UploadBezierFile");
-    UploadBezierFileButton.addEventListener("change", (e) => {
-        var selectedFile = event.target.files[0];
-        var filename = event.target.files[0].name;
-        var reader = new FileReader();
-        reader.onload = (event) => {
-            var lines = event.target.result.split("\n");
-            lines = cleanArray(lines)
-            var numCurves = parseInt(lines[0], 10);
-            assert(numCurves >= 0, "Number of curves must be greater than or equal to zero! (P >= 0)")
-            lines = lines.splice(1)
-
-            var curves = [];
-            var lineIdx = 0;
-            for (var i = 0; i < numCurves; ++i) {
-                curves[i] = new Curve();
-                var numPoints = -1;
-                /* remove the P, get total points in first line */
-                lines[lineIdx] = lines[lineIdx].substring(1)
-                lines[lineIdx] = lines[lineIdx].trim()
-                numPoints = parseInt(lines[lineIdx])
-                lines = lines.splice(1)
-
-                console.log("new curve")
-                curves[i].controlPoints = []
-                for (var j = 0; j < numPoints; ++j) {
-                    var separators = [' ', '\t'];
-                    var strArray = lines[0].split(new RegExp('[' + separators.join('') + ']', 'g'));
-                    strArray = cleanArray(strArray)
-                    assert(strArray.length == 2);
-                    var x = parseFloat(strArray[0])
-                    var y = parseFloat(strArray[1])
-                    console.log("x: " + x + " y: " + y);
-                    lines = lines.splice(1)
-                    if (numPoints < 100 || j % 2 == 0) {
-                        curves[i].controlPoints.push(x * 50.0, -y * 50.0, 0.0)
-                    }
-                }
-                curves[i].setDegree(numPoints - 1);
-
-                if (filename.endsWith(".crv")) {
-                    curves[i].showCurve = false;
-                    curves[i].showControlPolygon = true;
-                    curves[i].showControlPoints = false;
-                }
-                curveEditor.curves.push(curves[i])
-            }
-            console.log(lines);
-            curveEditor.backup();
-        }
-        reader.readAsText(selectedFile);
-    });
-
-
-    var UploadBSplineFileButton = document.getElementById("UploadBSplineFile");
-    UploadBSplineFileButton.addEventListener("change", (e) => {
-        var selectedFile = event.target.files[0];
-        var filename = event.target.files[0].name;
-        var reader = new FileReader();
-        reader.onload = (event) => {
-            var lines = event.target.result.split("\n");
-            lines = cleanArray(lines)
-            var numCurves = parseInt(lines[0], 10);
-            assert(numCurves >= 0, "Number of curves must be greater than or equal to zero! (P >= 0)")
-            lines = lines.splice(1)
-
-            var curves = [];
-            for (var i = 0; i < numCurves; ++i) {
-                curves[i] = new Curve();
-                var numPoints = -1;
-                var degree = -1;
-
-                /* Get the degree */
-                lines[0] = lines[0].trim()
-                degree = parseInt(lines[0]);
-                lines = lines.splice(1)
-
-                /* Get total points in first line */
-                lines[0] = lines[0].trim()
-                numPoints = parseInt(lines[0])
-                lines = lines.splice(1)
-
-                console.log("new curve")
-
-                /* Parse control points */
-                curves[i].controlPoints = []
-                for (var j = 0; j < numPoints; ++j) {
-                    var separators = [' ', '\t'];
-                    var strArray = lines[0].split(new RegExp('[' + separators.join('') + ']', 'g'));
-                    strArray = cleanArray(strArray)
-                    assert(strArray.length == 2);
-                    var x = parseFloat(strArray[0])
-                    var y = parseFloat(strArray[1])
-                    console.log("x: " + x + " y: " + y);
-                    lines = lines.splice(1)
-                    if (numPoints < 100 || j % 2 == 0) {
-                        curves[i].controlPoints.push(x * 50.0, -y * 50.0, 0.0)
-                    }
-                }
-
-                curves[i].setDegree(degree);
-
-                /* Parse knot */
-                var knotProvided = 0;
-                lines[0] = lines[0].trim()
-                knotProvided = parseInt(lines[0])
-                lines = lines.splice(1)
-
-                if (knotProvided == 0) {
-                    curves[i].setOpen(true);
-                    curves[i].setUniformity(true);
-                } else {
-                    curves[i].setOpen(false);
-                    curves[i].setUniformity(false);
-                    var separators = [' ', '\t'];
-                    var strArray = lines[0].split(new RegExp('[' + separators.join('') + ']', 'g'));
-                    strArray = cleanArray(strArray)
-                    var knot = [];
-                    for (var j = 0; j < strArray.length; ++j) {
-                        knot.push(parseFloat(strArray[j]));
-                    }
-                    /* normalize the knot */
-                    var min = knot[0];
-                    var max = knot[knot.length - 1];
-                    for (var j = 0; j < knot.length; ++j) {
-                        knot[j] -= min;
-                        knot[j] /= (max - min);
-                    }
-                    curves[i].knot_vector = knot;
-                    lines = lines.splice(1)
-                }
-
-
-                if (filename.endsWith(".crv")) {
-                    curves[i].showCurve = false;
-                    curves[i].showControlPolygon = true;
-                    curves[i].showControlPoints = false;
-                }
-                curveEditor.curves.push(curves[i])
-            }
-            console.log(lines);
-            curveEditor.backup();
-        }
-        reader.readAsText(selectedFile);
-    });
-});
-
-window.onresize = function () {
-    curveEditor.resize()
-    knotEditor.resize()
-};
-
-var knotEditorOpen = false;
+/* Main AngularJS controller */
 angular
     .module('BSplineEditor', ['ngMaterial', 'ngMessages', 'ngSanitize'])
     .config(function ($mdIconProvider, $mdThemingProvider) {
@@ -201,17 +14,17 @@ angular
             .defaultIconSet('img/icons/sets/core-icons.svg', 24);
 
         $mdThemingProvider.definePalette('black', {
-            '50': '333333', // Background color of bottom sheet
+            '50': '323639', // Background color of bottom sheet
             '100': '111111',
-            '200': '222222', // select
-            '300': '333333', // primary/warn
+            '200': '202124', // select
+            '300': '323639', // primary/warn
             '400': '444444',
             '500': '555555', // primary/warn 
-            '600': '2b9a2b', // background accent
+            '600': 'FFFFFF', // background accent
             '700': '777777',
             '800': '888888', // primary/warn
             '900': 'FFFFFF',
-            'A100': '222222', // primary/warn   accent    background
+            'A100': '202124', // primary/warn   accent    background
             'A200': 'FFFFFF', // accent (text)
             'A400': 'CCCCCC', // accent
             'A700': 'DDDDDD', // accent
@@ -246,20 +59,220 @@ angular
             }).join(separator);
         };
     })
-    .controller('DemoBasicCtrl', function DemoCtrl($mdDialog, $mdBottomSheet, $mdToast, $scope) {
-        this.settings = {
+    .controller('BSplineCtrl', function BSplineCtrl($mdDialog, $mdBottomSheet, $mdToast, $scope, $timeout, $window) {
+        $scope.settings = {
             printLayout: true,
             showControlPolygon: true,
             showControlHandles: true,
             showCurve: true,
-            zoom: 2000,
+            minzoom: 1,
+            maxzoom: 1000,
+            zoom: 400,
             snappingEnabled: true,
             fullScreen: false,
+            useOrtho: false,
             insertionMode: 'back',
             designName: (localStorage.getItem("design_name") == undefined) ? "Untitled design" : localStorage.getItem("design_name")
         };
 
-        this.sampleAction = function (name, ev) {
+        $timeout(function () {
+            const render = function (time) {
+                curveEditor.render(time);
+                knotEditor.render(time);
+                requestAnimationFrame(render);
+            };
+            
+            window.onresize = function () {
+                curveEditor.resize()
+                knotEditor.resize()
+            };
+            
+            function cleanArray(actual) {
+                var newArray = new Array();
+                for (var i = 0; i < actual.length; i++) {
+                    var temp = actual[i].trim()
+                    if (temp.indexOf('#') != -1) {
+                        temp = temp.substring(0, temp.indexOf('#'));
+                    }
+                    if (temp && temp.length >= 1) {
+                        newArray.push(temp);
+                    }
+                }
+                return newArray;
+            }
+            
+            function assert(condition, message) {
+                if (!condition) {
+                    message = message || "Assertion failed";
+                    if (typeof Error !== "undefined") {
+                        throw new Error(message);
+                    }
+                    throw message; // Fallback
+                }
+            }
+
+            // var UploadBezierFileButton = document.getElementById("UploadBezierFile");
+            // UploadBezierFileButton.addEventListener("change", (e) => {
+            //     var selectedFile = event.target.files[0];
+            //     var filename = event.target.files[0].name;
+            //     var reader = new FileReader();
+            //     reader.onload = (event) => {
+            //         var lines = event.target.result.split("\n");
+            //         lines = cleanArray(lines)
+            //         var numCurves = parseInt(lines[0], 10);
+            //         assert(numCurves >= 0, "Number of curves must be greater than or equal to zero! (P >= 0)")
+            //         lines = lines.splice(1)
+        
+            //         var curves = [];
+            //         var lineIdx = 0;
+            //         for (var i = 0; i < numCurves; ++i) {
+            //             curves[i] = new Curve();
+            //             var numPoints = -1;
+            //             /* remove the P, get total points in first line */
+            //             lines[lineIdx] = lines[lineIdx].substring(1)
+            //             lines[lineIdx] = lines[lineIdx].trim()
+            //             numPoints = parseInt(lines[lineIdx])
+            //             lines = lines.splice(1)
+        
+            //             console.log("new curve")
+            //             curves[i].controlPoints = []
+            //             for (var j = 0; j < numPoints; ++j) {
+            //                 var separators = [' ', '\t'];
+            //                 var strArray = lines[0].split(new RegExp('[' + separators.join('') + ']', 'g'));
+            //                 strArray = cleanArray(strArray)
+            //                 assert(strArray.length == 3);
+            //                 var x = parseFloat(strArray[0])
+            //                 var y = parseFloat(strArray[1])
+            //                 var z = parseFloat(strArray[2])
+            //                 console.log("x: " + x + " y: " + y + " z: " + z);
+            //                 lines = lines.splice(1)
+            //                 if (numPoints < 100 || j % 2 == 0) {
+            //                     curves[i].controlPoints.push(x, y, z)
+            //                 }
+            //             }
+            //             curves[i].setDegree(numPoints - 1);
+        
+            //             if (filename.endsWith(".crv")) {
+            //                 curves[i].showCurve = false;
+            //                 curves[i].showControlPolygon = true;
+            //                 curves[i].showControlPoints = false;
+            //             }
+            //             curveEditor.curves.push(curves[i])
+            //         }
+            //         console.log(lines);
+            //         curveEditor.backup();
+            //         curveEditor.selectedCurve = 0; // TEMPORARY
+            //     }
+            //     reader.readAsText(selectedFile);
+            // });
+        
+        
+            var UploadBSplineFileButton = document.getElementById("UploadBSplineFile");
+            UploadBSplineFileButton.addEventListener("change", (e) => {
+                var selectedFile = event.target.files[0];
+                var filename = event.target.files[0].name;
+                var reader = new FileReader();
+                reader.onload = (event) => {
+                    var lines = event.target.result.split("\n");
+                    lines = cleanArray(lines)
+                    var numCurves = parseInt(lines[0], 10);
+                    assert(numCurves >= 0, "Number of curves must be greater than or equal to zero! (P >= 0)")
+                    lines = lines.splice(1)
+        
+                    var curves = [];
+                    for (var i = 0; i < numCurves; ++i) {
+                        curves[i] = new Curve();
+                        var numPoints = -1;
+                        var degree = -1;
+        
+                        /* Get the degree */
+                        lines[0] = lines[0].trim()
+                        degree = parseInt(lines[0]);
+                        lines = lines.splice(1)
+        
+                        /* Get total points in first line */
+                        lines[0] = lines[0].trim()
+                        numPoints = parseInt(lines[0])
+                        lines = lines.splice(1)
+        
+                        console.log("new curve")
+        
+                        /* Parse control points */
+                        curves[i].controlPoints = []
+                        for (var j = 0; j < numPoints; ++j) {
+                            var separators = [' ', '\t'];
+                            var strArray = lines[0].split(new RegExp('[' + separators.join('') + ']', 'g'));
+                            strArray = cleanArray(strArray)
+                            assert(strArray.length == 3);
+                            var x = parseFloat(strArray[0])
+                            var y = parseFloat(strArray[1])
+                            var z = parseFloat(strArray[2])
+                            console.log("x: " + x + " y: " + y + " z: " + z);
+                            lines = lines.splice(1)
+                            if (numPoints < 100 || j % 2 == 0) {
+                                curves[i].controlPoints.push(x, y, z)
+                            }
+                        }
+        
+                        curves[i].setDegree(degree);
+        
+                        /* Parse knot */
+                        var knotProvided = 0;
+                        if (lines.length != 0) 
+                        {
+                            lines[0] = lines[0].trim()
+                            knotProvided = parseInt(lines[0])
+                            lines = lines.splice(1)
+                        }
+        
+                        if (knotProvided == 0) {
+                            curves[i].setOpen(true);
+                            curves[i].setUniformity(true);
+                        } else {
+                            curves[i].setOpen(false);
+                            curves[i].setUniformity(false);
+                            var separators = [' ', '\t'];
+                            var strArray = lines[0].split(new RegExp('[' + separators.join('') + ']', 'g'));
+                            strArray = cleanArray(strArray)
+                            var knot = [];
+                            for (var j = 0; j < strArray.length; ++j) {
+                                knot.push(parseFloat(strArray[j]));
+                            }
+                            /* normalize the knot */
+                            var min = knot[0];
+                            var max = knot[knot.length - 1];
+                            for (var j = 0; j < knot.length; ++j) {
+                                knot[j] -= min;
+                                knot[j] /= (max - min);
+                            }
+                            curves[i].knot_vector = knot;
+                            lines = lines.splice(1)
+                        }
+        
+        
+                        if (filename.endsWith(".crv")) {
+                            curves[i].showCurve = false;
+                            curves[i].showControlPolygon = true;
+                            curves[i].showControlPoints = false;
+                        }
+                        curveEditor.curves.push(curves[i])
+                    }
+                    console.log(lines);
+                    curveEditor.backup();
+                    curveEditor.selectedCurve = 0; // TEMPORARY
+
+                }
+                reader.readAsText(selectedFile);
+            });
+
+            curveEditor = new CurveEditor();
+            knotEditor = new KnotEditor();
+            requestAnimationFrame(render);
+        });
+
+
+
+        $scope.sampleAction = function (name, ev) {
             $mdDialog.show($mdDialog.alert()
                 .title(name)
                 .textContent('You triggered the "' + name + '" action')
@@ -268,20 +281,20 @@ angular
             );
         };
 
-        this.updateSnapping = function (ev) {
-            curveEditor.setSnappingMode(this.settings.snappingEnabled);
+        $scope.updateSnapping = function (ev) {
+            curveEditor.setSnappingMode($scope.settings.snappingEnabled);
             $mdToast.show(
                 $mdToast.simple()
-                    .textContent('Snapping ' + (this.settings.snappingEnabled) ? "enabled" : "disabled"+ '.')
+                    .textContent('Snapping ' + ($scope.settings.snappingEnabled) ? "enabled" : "disabled"+ '.')
                     .position('bottom right')
                     .hideDelay(3000)
             );
         }
 
-        this.updateVisibility = function (ev) {
-            curveEditor.setControlPolygonVisibility(this.settings.showControlPolygon);
-            curveEditor.setControlHandleVisibility(this.settings.showControlHandles);
-            curveEditor.setCurveVisibility(this.settings.showCurve);
+        $scope.updateVisibility = function (ev) {
+            curveEditor.setControlPolygonVisibility($scope.settings.showControlPolygon);
+            curveEditor.setControlHandleVisibility($scope.settings.showControlHandles);
+            curveEditor.setCurveVisibility($scope.settings.showCurve);
 
             $mdToast.show(
                 $mdToast.simple()
@@ -291,7 +304,7 @@ angular
             );
         };
 
-        this.addCurve = function (ev) {
+        $scope.addCurve = function (ev) {
             console.log(ev);
             curveEditor.newCurve()
             $mdToast.show(
@@ -302,7 +315,7 @@ angular
             );
         };
 
-        this.deleteCurve = function (ev) {
+        $scope.deleteCurve = function (ev) {
             if (curveEditor.getSelectedCurve() == -1) {
                 $mdToast.show(
                     $mdToast.simple()
@@ -316,7 +329,7 @@ angular
             curveEditor.deleteLastCurve();
         };
 
-        this.deleteLastHandle = function (ev) {
+        $scope.deleteLastHandle = function (ev) {
             if (curveEditor.getSelectedCurve() == -1) {
                 $mdToast.show(
                     $mdToast.simple()
@@ -330,15 +343,15 @@ angular
             curveEditor.deleteLastHandle();
         }
 
-        this.updateInsertionMode = function (ev) {
-            console.log(this.settings.insertionMode)
-            if (this.settings.insertionMode == "front") {
+        $scope.updateInsertionMode = function (ev) {
+            console.log($scope.settings.insertionMode)
+            if ($scope.settings.insertionMode == "front") {
                 curveEditor.setAddMode(true, false, false);
             }
-            if (this.settings.insertionMode == "back") {
+            if ($scope.settings.insertionMode == "back") {
                 curveEditor.setAddMode(false, true, false);
             }
-            if (this.settings.insertionMode == "closest") {
+            if ($scope.settings.insertionMode == "closest") {
                 curveEditor.setAddMode(false, false, true);
             }
 
@@ -350,11 +363,11 @@ angular
             );
         }
 
-        this.toggleFullScreen = function (ev, toggle=false) {
+        $scope.toggleFullScreen = function (ev, toggle=false) {
             if (toggle) {
-                this.settings.fullScreen = !this.settings.fullScreen;
+                $scope.settings.fullScreen = !$scope.settings.fullScreen;
             }
-            if (this.settings.fullScreen) {
+            if ($scope.settings.fullScreen) {
                 var docElm = document.getElementById("editor");
                 if (docElm.requestFullscreen) {
                     docElm.requestFullscreen();
@@ -378,8 +391,12 @@ angular
             }
         };
 
-        this.resetCamera = function (ev) {
-            this.settings.zoom = 2000;
+        $scope.goTo2DEditor = function(ev) {
+            $window.location.href = "./index.html"
+        }
+
+        $scope.resetCamera = function (ev) {
+            $scope.settings.zoom = 400;
             curveEditor.resetCamera();
             $mdToast.show(
                 $mdToast.simple()
@@ -389,11 +406,20 @@ angular
             );
         }
 
-        this.updateZoom = function () {
-            curveEditor.updateZoom(this.settings.zoom / 1000.0);
+        $scope.toggleOrtho = function (ev) {
+            curveEditor.setOrthoEnabled($scope.settings.useOrtho);
         }
 
-        this.save = function (ev) {
+        $scope.updateZoom = function () {
+            var amount = (1000.0 - $scope.settings.zoom) / 1000.0;
+            amount *= 2;
+            amount += 1;
+            amount *= .5;
+
+            curveEditor.updateZoom(amount);
+        }
+
+        $scope.save = function (ev) {
             // Function to download data to a file
             function download(data, filename, type) {
                 var file = new Blob([data], { type: type });
@@ -423,8 +449,8 @@ angular
                 text += curveEditor.curves[i].getNumCtlPoints() + "\n";
                 text += "# Control point data: \n";
                 for (var j = 0; j < curveEditor.curves[i].getNumCtlPoints(); ++j) {
-                    text += curveEditor.curves[i].controlPoints[j * 3 + 0] / 50.0 + "    ";
-                    text += curveEditor.curves[i].controlPoints[j * 3 + 1] / -50.0 + "\n"
+                    text += curveEditor.curves[i].controlPoints[j * 3 + 0] + "    ";
+                    text += curveEditor.curves[i].controlPoints[j * 3 + 1] + "\n"
                 }
                 text += "# Knot present: \n";
                 text += "1 \n";
@@ -434,10 +460,10 @@ angular
                 }
                 text += "\n";
             }
-            download(text, this.settings.designName + ".dat", "text");
+            download(text, $scope.settings.designName + ".dat", "text");
         };
 
-        this.renameDesign = function (ev) {
+        $scope.renameDesign = function (ev) {
             curveEditor.setShortcutsEnabled(false);
 
             // Appending dialog to document.body to cover sidenav in docs app
@@ -453,13 +479,13 @@ angular
                 .cancel('Cancel');
 
             $mdDialog.show(confirm).then((result) => {
-                this.settings.designName = result;
-                localStorage.setItem("design_name", this.settings.designName);
+                $scope.settings.designName = result;
+                localStorage.setItem("design_name", $scope.settings.designName);
                 curveEditor.setShortcutsEnabled(true);
 
                 $mdToast.show(
                     $mdToast.simple()
-                        .textContent('Project renamed to "' + this.settings.designName + '".')
+                        .textContent('Project renamed to "' + $scope.settings.designName + '".')
                         .position('bottom right')
                         .hideDelay(3000)
                 );
@@ -474,7 +500,7 @@ angular
             });
         };
 
-        this.newDesign = function (ev) {
+        $scope.newDesign = function (ev) {
             curveEditor.setShortcutsEnabled(false);
 
             // Appending dialog to document.body to cover sidenav in docs app
@@ -490,9 +516,9 @@ angular
                 .cancel('Cancel');
 
             $mdDialog.show(confirm).then((result) => {
-                this.settings.designName = result;
+                $scope.settings.designName = result;
                 curveEditor.deleteAll();
-                localStorage.setItem("design_name", this.settings.designName);
+                localStorage.setItem("design_name", $scope.settings.designName);
                 curveEditor.setShortcutsEnabled(true);
             }, () => {
                 console.log('New design canceled');
@@ -500,11 +526,15 @@ angular
             });
         };
 
-        this.showHelp = function (ev) {
+        $scope.showHelp = function (ev) {
             $mdDialog.show($mdDialog.alert()
                 .title("Help")
                 .clickOutsideToClose(true)
-                .htmlContent('<p>Click and hold to create/remove a control handle. <\p>  <p>Click and drag to move the camera. <\p> <p> To zoom in or out, use the zoom slider. <\p> <p> Knot vectors can be edited by clicking the "EDIT KNOT" button on the top right. <\p> <p>Curves can be added or removed from the \"Edit\" menu.<\p> <p>For any additional questions, contact Nate Morrical at natemorrical@gmail.com<\p>')
+                .htmlContent(
+                    '<p>Click and hold to create or remove a control handle. <\p>'
+                  + '<p>Click and drag on the empty region to move the camera. <\p>'
+                  + '<p> Use the zoom slider to zoom in or out. <\p> '
+                  + '<p> Edit knot vectors by clicking the abacus button on the top right. <\p>')
                 .ok('Close')
                 .targetEvent(ev)
             );
@@ -528,7 +558,7 @@ angular
             $scope.alert = '';
             $mdBottomSheet.show({
                 templateUrl: 'bottom-sheet-grid-template.html',
-                controller: 'GridBottomSheetCtrl',
+                controller: 'KnotEditorCtrl',
                 // clickOutsideToClose: false,
                 disableBackdrop: false,
                 disableParentScroll: true
@@ -550,7 +580,7 @@ angular
             knotEditorOpen = false;
         }
     })
-    .controller('GridBottomSheetCtrl', function ($scope, $mdToast, $mdBottomSheet, $timeout) {
+    .controller('KnotEditorCtrl', function ($scope, $mdToast, $mdBottomSheet, $timeout) {
         $scope.data = {
             curve: curveEditor.getSelectedCurve(),
             degree: curveEditor.getSelectedCurve().getDegree(),

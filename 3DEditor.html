@@ -25,7 +25,7 @@
                     <h2 class="md-toolbar-tools">{{ settings.designName }}</h2>
                     <md-menu-bar style="display: flex;">
                         <md-menu>
-                            <button ng-click="$mdMenu.open()" hide-xs>
+                            <button ng-click="$mdMenu.open()">
                                 File
                             </button>
                             <md-menu-content>
@@ -48,14 +48,14 @@
                                 <!-- <md-menu-item>
                                     <md-button onclick="document.getElementById('UploadBezierFile').click();">
                                         Import Bezier Design...
-                                         <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span> -->
-                                    <!-- </md-button> -->
-                                    <!-- <input class="ng-hide" id="UploadBezierFile" type="file" />
+                                        <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span>
+                                    </md-button>
+                                    <input class="ng-hide" id="UploadBezierFile" type="file" />
                                 </md-menu-item> -->
                                 <md-menu-item>
                                     <md-button onclick="document.getElementById('UploadBSplineFile').click();">
-                                        Import 2D Design...
-                                        <!-- <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span> -->
+                                        Import 3D B-Spline Design...
+                                        <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span>
                                     </md-button>
                                     <input class="ng-hide" id="UploadBSplineFile" type="file" />
                                 </md-menu-item>
@@ -75,91 +75,18 @@
                         </md-menu>
                         <md-menu>
                             <button ng-click="$mdMenu.open()">
-                                Edit
-                            </button>
-                            <md-menu-content>
-                                <!-- <md-menu-item class="md-indent">
-                                    <md-icon md-svg-icon="undo"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('undo', $event)">
-                                        Undo
-                                        <span class="md-alt-text">{{ 'M-Z' | keyboardShortcut }}</span>
-                                    </md-button>
-                                </md-menu-item>
-                                <md-menu-item class="md-indent">
-                                    <md-icon md-svg-icon="redo"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('redo', $event)">
-                                        Redo
-                                        <span class="md-alt-text">{{ 'M-Y' | keyboardShortcut }}</span>
-                                    </md-button>
-                                </md-menu-item>
-                                <md-menu-divider></md-menu-divider>
-                                <md-menu-item class="md-indent">
-                                    <md-icon md-svg-icon="content-cut"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('cut', $event)">
-                                        Cut
-                                        <span class="md-alt-text">{{ 'M-X' | keyboardShortcut }}</span>
-                                    </md-button>
-                                </md-menu-item>
-                                <md-menu-item class="md-indent">
-                                    <md-icon md-svg-icon="content-copy"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('copy', $event)">
-                                        Copy
-                                        <span class="md-alt-text">{{ 'M-C' | keyboardShortcut }}</span>
-                                    </md-button>
-                                </md-menu-item>
-                                <md-menu-item class="md-indent">
-                                    <md-icon md-svg-icon="content-paste"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('paste', $event)">
-                                        Paste
-                                        <span class="md-alt-text">{{ 'M-P' | keyboardShortcut }}</span>
-                                    </md-button>
-                                </md-menu-item>
-                                <md-menu-divider></md-menu-divider> -->
-                                <md-menu-item class="md-indent">
-                                    <md-button ng-click="addCurve($event)">
-                                        Add Curve
-                                        <!-- <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span> -->
-                                    </md-button>
-                                </md-menu-item>
-                                <md-menu-item class="md-indent">
-                                    <md-button ng-click="deleteCurve($event)">
-                                        Delete Curve
-                                        <!-- <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span> -->
-                                    </md-button>
-                                </md-menu-item>
-                                <md-menu-item class="md-indent">
-                                    <md-button ng-click="deleteLastHandle($event)">
-                                        Delete Last Handle
-                                        <!-- <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span> -->
-                                    </md-button>
-                                </md-menu-item>
-                                <md-menu-divider></md-menu-divider>
-                                <md-menu>
-                                    <md-button class="button-override" ng-click="$mdMenu.open()">Insertion Mode</md-button>
-                                    <md-menu-content width="3">
-                                        <md-menu-item type="radio" ng-model="settings.insertionMode" ng-click="updateInsertionMode($event)"
-                                            value="front">Add to Front</md-menu-item>
-                                        <md-menu-item type="radio" ng-model="settings.insertionMode" ng-click="updateInsertionMode($event)"
-                                            value="back">Add to Back</md-menu-item>
-                                        <md-menu-item type="radio" ng-model="settings.insertionMode" ng-click="updateInsertionMode($event)"
-                                            value="closest">Add to Closest</md-menu-item>
-                                    </md-menu-content>
-                                </md-menu>
-                                <md-menu-item type="checkbox" ng-model="settings.snappingEnabled" ng-click="updateSnapping($event)">Snapping
-                                    Enabled</md-menu-item>
-                            </md-menu-content>
-                        </md-menu>
-                        <md-menu>
-                            <button ng-click="$mdMenu.open()">
                                 View
                             </button>
                             <md-menu-content>
                                 <md-menu-item class="md-indent">
                                     <md-button ng-click="resetCamera($event)">
                                         Reset Camera
-                                        <!-- <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span> -->
+                                        <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
+
+                                <md-menu-item type="checkbox" ng-model="settings.useOrtho" ng-click="toggleOrtho($event)">Orthographic
+                                    Mode</md-menu-item>
 
                                 <md-menu-divider></md-menu-divider>
                                 <md-menu-item type="checkbox" ng-model="settings.showControlPolygon" ng-click="updateVisibility($event)">Show
@@ -172,8 +99,8 @@
                                 <md-menu-item type="checkbox" ng-model="settings.fullScreen" ng-click="toggleFullScreen($event)"
                                     nv>Full screen</md-menu-item>
                                 <md-menu-item>
-                                    <md-button ng-click="goTo3DEditor()">
-                                        Go to 3D viewer
+                                    <md-button ng-click="goTo2DEditor()">
+                                        Go to 2D Editor
                                         <!-- <span class="md-alt-text"> {{ 'M-O' | keyboardShortcut }}</span> -->
                                     </md-button>
                                 </md-menu-item>
@@ -209,14 +136,6 @@
                             <md-button class="md-icon-button" aria-label="More" ng-click="openBottomSheet($event)">
                                 <md-tooltip md-direction="bottom">Open Knot Editor</md-tooltip>
                                 <md-icon md-svg-icon="img/icons/abacus.svg"></md-icon>
-                            </md-button>
-                            <md-menu-content></md-menu-content>
-                        </md-menu>
-
-                        <md-menu>
-                            <md-button class="md-icon-button" aria-label="More" ng-click="addCurve($event)">
-                                <md-tooltip md-direction="bottom">Add Curve</md-tooltip>
-                                <md-icon md-svg-icon="img/icons/green_add.svg"></md-icon>
                             </md-button>
                             <md-menu-content></md-menu-content>
                         </md-menu>
@@ -269,7 +188,7 @@
     <script src="./Scripts/jquery-3.3.1.js"></script>
     <script src="./Scripts/hammer.min.js"></script>
     <script src="./Scripts/gl-matrix.js"></script>
-    <script type="module" src="./Scripts/2DEditor.js"></script>
+    <script type="module" src="./Scripts/3DEditor.js"></script>
 
 </body>
 
