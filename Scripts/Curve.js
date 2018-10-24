@@ -175,8 +175,8 @@ class Curve {
         this.showControlPoints = true;
         this.thickness = (obj == null) ? 10.0 : obj.thickness;
         this.controlPoints = (obj == null) ? [
-            -.5 + x, y, 0.0,
-            .5 + x, y, 0.0,
+            -.1 + x, y, 0.0,
+            .1 + x, y, 0.0,
         ] : obj.controlPoints;
         this.temporaryPoint = []
 
