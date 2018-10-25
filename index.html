@@ -178,10 +178,11 @@
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-divider></md-menu-divider>
-                                <md-menu-item>
-                                    <md-slider style="width: 100%" class="zoomSlider" ng-model="settings.zoom"
+                                <md-menu-item style="overflow: hidden;">
+                                    <md-slider style="width: 100%;" class="zoomSlider" ng-model="settings.zoom"
                                         ng-change="updateZoom()" min="{{settings.minzoom}}" max="{{settings.maxzoom}}"
-                                        aria-label="regular slider"></md-slider>
+                                        aria-label="regular slider">
+                                    </md-slider>
                                 </md-menu-item>
                             </md-menu-content>
                         </md-menu>
@@ -193,7 +194,7 @@
                             <!-- <div hide-sm hide-xs flex="20" layout layout-align="center center">
                                 <span class="md-body-1">Zoom</span>
                             </div> -->
-                            <md-slider style="width: 100%" class="zoomSlider" ng-model="settings.zoom" ng-change="updateZoom()"
+                            <md-slider style="width: 90%;" class="zoomSlider" ng-model="settings.zoom" ng-change="updateZoom()"
                                 min="{{settings.minzoom}}" max="{{settings.maxzoom}}" aria-label="regular slider"></md-slider>
                         </md-slider-container>
 

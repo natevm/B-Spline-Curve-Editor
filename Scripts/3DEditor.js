@@ -580,7 +580,7 @@ angular
             knotEditorOpen = false;
         }
     })
-    .controller('KnotEditorCtrl', function ($scope, $mdToast, $mdBottomSheet, $timeout) {
+    .controller('KnotEditorCtrl', function ($scope, $mdToast, $mdBottomSheet, $timeout, $mdDialog) {
         $scope.data = {
             curve: curveEditor.getSelectedCurve(),
             degree: curveEditor.getSelectedCurve().getDegree(),
@@ -609,17 +609,42 @@ angular
             curveEditor.backup();
         }
         $scope.increaseDegree = function () {
-            if (($scope.data.degree < $scope.data.maxDegree) && ($scope.data.degree < 100)) {
-                $scope.data.degree++;
-            } else {
-                $mdToast.show(
-                    $mdToast.simple()
-                        .textContent('Maximum degree reached.')
-                        .position('bottom right')
-                        .hideDelay(3000)
-                );
+            if ($scope.data.degree >= 8) {
+                var confirm = $mdDialog.confirm()
+                    .title('Are you sure you like to increase the degree further?')
+                    .textContent('A higher degree may decrease performance.')
+                    .ariaLabel('Increase Degree Warning')
+                    .ok('Please do it!')
+                    .cancel('Cancel');
+
+                $mdDialog.show(confirm).then(function () {
+                    if (($scope.data.degree < $scope.data.maxDegree) && ($scope.data.degree < 100)) {
+                        $scope.data.degree++;
+                    } else {
+                        $mdToast.show(
+                            $mdToast.simple()
+                                .textContent('Maximum degree reached.')
+                                .position('bottom right')
+                                .hideDelay(3000)
+                        );
+                    }
+                    $scope.updateDegree();
+                }, function () {
+                });
             }
-            $scope.updateDegree();
+            else {
+                if (($scope.data.degree < $scope.data.maxDegree) && ($scope.data.degree < 100)) {
+                    $scope.data.degree++;
+                } else {
+                    $mdToast.show(
+                        $mdToast.simple()
+                            .textContent('Maximum degree reached.')
+                            .position('bottom right')
+                            .hideDelay(3000)
+                    );
+                }
+                $scope.updateDegree();
+            }
         }
         $scope.decreaseDegree = function () {
             if ($scope.data.degree > $scope.data.minDegree) {

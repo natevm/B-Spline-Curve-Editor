@@ -596,7 +596,7 @@ angular
             curveEditor.backup();
         }
         $scope.increaseDegree = function () {
-            if ($scope.data.degree >= 10) {
+            if ($scope.data.degree >= 8) {
                 var confirm = $mdDialog.confirm()
                     .title('Are you sure you like to increase the degree further?')
                     .textContent('A higher degree may decrease performance.')
