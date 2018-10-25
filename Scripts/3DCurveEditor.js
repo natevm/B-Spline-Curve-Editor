@@ -83,7 +83,6 @@ class CurveEditor {
         });
 
         hammer.get('pan').set({
-            threshold: 10,
             threshold: 9,
             direction: Hammer.DIRECTION_ALL
         });
@@ -98,13 +97,6 @@ class CurveEditor {
         });
         hammer.on('pan', (e) => {
             var bb = e.target.getBoundingClientRect();
-            /* Weird bug where centerx and y are zero, flying you off the screen... */
-            if ((e.center.x == 0) && (e.center.y == 0)) {
-                this.panEnd();
-                console.log(e)
-                return;
-            }
-
             this.pan(
                 (e.center.x - bb.left) / this.zoom - this.gl.canvas.clientWidth / (2.0 * this.zoom),
                 (e.center.y - bb.top) / this.zoom - this.gl.canvas.clientHeight / (2.0 * this.zoom),
@@ -204,12 +196,16 @@ class CurveEditor {
     }
 
     panStart(initialX, initialY, deltaX, deltaY) {
+        this.previousX = initialX;
+        this.previousY = initialY;
         console.log("panStart is currently unsupported");
     }
 
     pan(x, y, deltax, deltay) {
-        this.deltaX = deltax * .001;
-        this.deltaY = deltay * .001;
+        this.deltaX = (x - this.previousX) * .1;
+        this.deltaY = (y - this.previousY) * .1;
+        this.previousX = x;
+        this.previousY = y;
         // console.log("pan is currently unsupported");
     }
 
@@ -346,18 +342,16 @@ class CurveEditor {
         mat4.multiply(perspectiveMatrix, perspectiveMatrix, view);
         mat4.scale(perspectiveMatrix, perspectiveMatrix, [1.0/this.zoom, 1.0/this.zoom, 1.0/this.zoom]);
 
-        
         /* Move the camera */
-        
 
         const modelViewMatrix = mat4.create();
-        mat4.rotate(modelViewMatrix, modelViewMatrix, -this.rotX + now * .2, [0, 1, 0]);
-        // mat4.rotate(modelViewMatrix, modelViewMatrix, this.rotY, [1, 0, 0]);
+        mat4.rotate(modelViewMatrix, modelViewMatrix, -this.rotY, [1, 0, 0]);
+        mat4.rotate(modelViewMatrix, modelViewMatrix, -this.rotX, [0, 1, 0]);
 
         this.rotX += this.deltaX;
         this.rotY += this.deltaY;
-        this.deltaX *= .99;
-        this.deltaY *= .99;
+        this.deltaX *= .0;
+        this.deltaY *= .0;
 
         /* Resize lines */
         for (let i = 0; i < this.curves.length; ++i) {

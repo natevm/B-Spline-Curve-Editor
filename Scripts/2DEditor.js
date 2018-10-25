@@ -80,12 +80,12 @@ angular
                 knotEditor.render(time);
                 requestAnimationFrame(render);
             };
-            
+
             window.onresize = function () {
                 curveEditor.resize()
                 knotEditor.resize()
             };
-            
+
             function cleanArray(actual) {
                 var newArray = new Array();
                 for (var i = 0; i < actual.length; i++) {
@@ -99,7 +99,7 @@ angular
                 }
                 return newArray;
             }
-            
+
             function assert(condition, message) {
                 if (!condition) {
                     message = message || "Assertion failed";
@@ -121,7 +121,7 @@ angular
             //         var numCurves = parseInt(lines[0], 10);
             //         assert(numCurves >= 0, "Number of curves must be greater than or equal to zero! (P >= 0)")
             //         lines = lines.splice(1)
-        
+
             //         var curves = [];
             //         var lineIdx = 0;
             //         for (var i = 0; i < numCurves; ++i) {
@@ -132,7 +132,7 @@ angular
             //             lines[lineIdx] = lines[lineIdx].trim()
             //             numPoints = parseInt(lines[lineIdx])
             //             lines = lines.splice(1)
-        
+
             //             console.log("new curve")
             //             curves[i].controlPoints = []
             //             for (var j = 0; j < numPoints; ++j) {
@@ -149,7 +149,7 @@ angular
             //                 }
             //             }
             //             curves[i].setDegree(numPoints - 1);
-        
+
             //             if (filename.endsWith(".crv")) {
             //                 curves[i].showCurve = false;
             //                 curves[i].showControlPolygon = true;
@@ -162,8 +162,8 @@ angular
             //     }
             //     reader.readAsText(selectedFile);
             // });
-        
-        
+
+
             var UploadBSplineFileButton = document.getElementById("UploadBSplineFile");
             UploadBSplineFileButton.addEventListener("change", (e) => {
                 var selectedFile = event.target.files[0];
@@ -175,25 +175,25 @@ angular
                     var numCurves = parseInt(lines[0], 10);
                     assert(numCurves >= 0, "Number of curves must be greater than or equal to zero! (P >= 0)")
                     lines = lines.splice(1)
-        
+
                     var curves = [];
                     for (var i = 0; i < numCurves; ++i) {
                         curves[i] = new Curve();
                         var numPoints = -1;
                         var degree = -1;
-        
+
                         /* Get the degree */
                         lines[0] = lines[0].trim()
                         degree = parseInt(lines[0]);
                         lines = lines.splice(1)
-        
+
                         /* Get total points in first line */
                         lines[0] = lines[0].trim()
                         numPoints = parseInt(lines[0])
                         lines = lines.splice(1)
-        
+
                         console.log("new curve")
-        
+
                         /* Parse control points */
                         curves[i].controlPoints = []
                         for (var j = 0; j < numPoints; ++j) {
@@ -209,15 +209,15 @@ angular
                                 curves[i].controlPoints.push(x, -y, 0.0)
                             }
                         }
-        
+
                         curves[i].setDegree(degree);
-        
+
                         /* Parse knot */
                         var knotProvided = 0;
                         lines[0] = lines[0].trim()
                         knotProvided = parseInt(lines[0])
                         lines = lines.splice(1)
-        
+
                         if (knotProvided == 0) {
                             curves[i].setOpen(true);
                             curves[i].setUniformity(true);
@@ -241,8 +241,8 @@ angular
                             curves[i].knot_vector = knot;
                             lines = lines.splice(1)
                         }
-        
-        
+
+
                         if (filename.endsWith(".crv")) {
                             curves[i].showCurve = false;
                             curves[i].showControlPolygon = true;
@@ -276,7 +276,7 @@ angular
             curveEditor.setSnappingMode($scope.settings.snappingEnabled);
             $mdToast.show(
                 $mdToast.simple()
-                    .textContent('Snapping ' + ($scope.settings.snappingEnabled) ? "enabled" : "disabled"+ '.')
+                    .textContent('Snapping ' + ($scope.settings.snappingEnabled) ? "enabled" : "disabled" + '.')
                     .position('bottom right')
                     .hideDelay(3000)
             );
@@ -354,7 +354,7 @@ angular
             );
         }
 
-        $scope.toggleFullScreen = function (ev, toggle=false) {
+        $scope.toggleFullScreen = function (ev, toggle = false) {
             if (toggle) {
                 $scope.settings.fullScreen = !$scope.settings.fullScreen;
             }
@@ -382,7 +382,7 @@ angular
             }
         };
 
-        $scope.goTo3DEditor = function(ev) {
+        $scope.goTo3DEditor = function (ev) {
             $window.location.href = "./3DEditor.html"
         }
 
@@ -402,7 +402,7 @@ angular
             amount *= 4;
             amount += 1;
             // // amount *= 1000;
-            
+
             curveEditor.updateZoom(amount);
         }
 
@@ -519,9 +519,9 @@ angular
                 .clickOutsideToClose(true)
                 .htmlContent(
                     '<p>Click and hold to create or remove a control handle. <\p>'
-                  + '<p>Click and drag on the empty region to move the camera. <\p>'
-                  + '<p> Use the zoom slider to zoom in or out. <\p> '
-                  + '<p> Edit knot vectors by clicking the abacus button on the top right. <\p>')
+                    + '<p>Click and drag on the empty region to move the camera. <\p>'
+                    + '<p> Use the zoom slider to zoom in or out. <\p> '
+                    + '<p> Edit knot vectors by clicking the abacus button on the top right. <\p>')
                 .ok('Close')
                 .targetEvent(ev)
             );
@@ -567,7 +567,7 @@ angular
             knotEditorOpen = false;
         }
     })
-    .controller('KnotEditorCtrl', function ($scope, $mdToast, $mdBottomSheet, $timeout) {
+    .controller('KnotEditorCtrl', function ($scope, $mdToast, $mdDialog, $mdBottomSheet, $timeout) {
         $scope.data = {
             curve: curveEditor.getSelectedCurve(),
             degree: curveEditor.getSelectedCurve().getDegree(),
@@ -596,17 +596,44 @@ angular
             curveEditor.backup();
         }
         $scope.increaseDegree = function () {
-            if (($scope.data.degree < $scope.data.maxDegree) && ($scope.data.degree < 100)) {
-                $scope.data.degree++;
-            } else {
-                $mdToast.show(
-                    $mdToast.simple()
-                        .textContent('Maximum degree reached.')
-                        .position('bottom right')
-                        .hideDelay(3000)
-                );
+            if ($scope.data.degree >= 10) {
+                var confirm = $mdDialog.confirm()
+                    .title('Are you sure you like to increase the degree further?')
+                    .textContent('A higher degree may decrease performance.')
+                    .ariaLabel('Increase Degree Warning')
+                    .ok('Please do it!')
+                    .cancel('Cancel');
+
+                $mdDialog.show(confirm).then(function () {
+                    if (($scope.data.degree < $scope.data.maxDegree) && ($scope.data.degree < 100)) {
+                        $scope.data.degree++;
+                    } else {
+                        $mdToast.show(
+                            $mdToast.simple()
+                                .textContent('Maximum degree reached.')
+                                .position('bottom right')
+                                .hideDelay(3000)
+                        );
+                    }
+                    $scope.updateDegree();
+                }, function () {
+                });
             }
-            $scope.updateDegree();
+            else {
+
+                if (($scope.data.degree < $scope.data.maxDegree) && ($scope.data.degree < 100)) {
+                    $scope.data.degree++;
+                } else {
+                    $mdToast.show(
+                        $mdToast.simple()
+                            .textContent('Maximum degree reached.')
+                            .position('bottom right')
+                            .hideDelay(3000)
+                    );
+                }
+                $scope.updateDegree();
+            }
+
         }
         $scope.decreaseDegree = function () {
             if ($scope.data.degree > $scope.data.minDegree) {

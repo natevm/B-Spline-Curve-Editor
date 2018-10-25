@@ -191,7 +191,7 @@ class Curve {
         this.isUniform = (obj == null) ?  true : obj.isUniform;
         this.degree = (obj == null) ? 1 : obj.degree;
         this.knot_vector = (obj == null) ? [0.0, .33, .66, 1.0] : obj.knot_vector;
-        this.numSamples = 2 * this.degree + 20;
+        this.numSamples = 3 * this.degree + 20;
 
         this.updateConstraints();
         this.updateBuffers();

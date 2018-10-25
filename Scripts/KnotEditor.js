@@ -45,7 +45,7 @@ class KnotEditor {
         this.position = { x: 0, y: 0 };
         this.handleRadius = 20;
         this.numHandleSamples = 30;
-        this.numBasisSamples = 100;
+        this.numBasisSamples = 200;
         this.line_needs_refresh = [];
 
         this.curve = undefined;
@@ -120,7 +120,7 @@ class KnotEditor {
 
     setCurve(curve) {
         this.curve = curve;
-        this.numBasisSamples = 1000 / curve.getDegree();
+        // this.numBasisSamples = 1000 / curve.getDegree();
     }
 
     panStart(x, y, deltaX, deltaY) {
@@ -360,8 +360,6 @@ class KnotEditor {
 
                 this.lines[numControlPoints + i].points.push(p[0], p[1], p[2]);
                 this.lines[numControlPoints + i].points.push(p[0], p[1], p[2]);
-
-
             }
             this.lines[numControlPoints + i].updateBuffers(this.gl);
 
@@ -384,17 +382,17 @@ class KnotEditor {
 
         /* Mechanism to keep fps at a reasonable rate. Not ideal, but sampling basis is expensive, would rather 
             have a high frame rate */
-        if (this.curve.getDegree() != 1) {
-            if (end - start > 32) {
-                this.numBasisSamples -= 10;
-            } else if (end - start < 16) {
-                this.numBasisSamples += 10;
-                this.numBasisSamples = Math.min(this.numBasisSamples, 200);
-                for (var i = 0; i < this.lines.length; ++i) {
-                    this.line_needs_refresh[i] = true;
-                }
-            }
-        }
+        // if (this.curve.getDegree() != 1) {
+        //     if (end - start > 32) {
+        //         this.numBasisSamples -= 10;
+        //     } else if (end - start < 16) {
+        //         this.numBasisSamples += 10;
+        //         this.numBasisSamples = Math.min(this.numBasisSamples, 200);
+        //         for (var i = 0; i < this.lines.length; ++i) {
+        //             this.line_needs_refresh[i] = true;
+        //         }
+        //     }
+        // }
     }
 
     clearWebGL() {
