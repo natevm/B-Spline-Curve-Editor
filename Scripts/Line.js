@@ -166,7 +166,6 @@ class Line {
         this.buffers[gl] = undefined;
         Line.ShaderPrograms[gl] = undefined;
         Line.ProgramInfo[gl] = undefined;
-        console.log("I am freeing buffers!")
     }
 
     draw(gl, projection, modelView, aspect, time) {

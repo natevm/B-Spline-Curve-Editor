@@ -173,11 +173,11 @@ class Curve {
         this.showCurve = true;
         this.showControlPolygon = true;
         this.showControlPoints = true;
-        this.thickness = (obj == null) ? 10.0 : obj.thickness;
+        this.thickness = (obj == null) ? 5.0 : obj.thickness;
         this.controlPoints = (obj == null) ? [
             -.1 + x, y, 0.0,
             .1 + x, y, 0.0,
-        ] : obj.controlPoints;
+        ] : obj.controlPoints.slice();
         this.temporaryPoint = []
 
         this.handleRadius = 50;
@@ -190,7 +190,7 @@ class Curve {
         this.isOpen =  (obj == null) ? true : obj.isOpen;
         this.isUniform = (obj == null) ?  true : obj.isUniform;
         this.degree = (obj == null) ? 1 : obj.degree;
-        this.knot_vector = (obj == null) ? [0.0, .33, .66, 1.0] : obj.knot_vector;
+        this.knot_vector = (obj == null) ? [0.0, .33, .66, 1.0] : obj.knot_vector.slice();
         this.numSamples = 3 * this.degree + 20;
 
         this.updateConstraints();
@@ -548,15 +548,30 @@ class Curve {
         return -1;
     }
 
-    getSnapPosition(x, y, selectedIsCurrent, currentHandle) {
+    getSnapPosition(x, y, selectedIsCurrent, currentHandle, snapToX, snapToY) {
+        if ((snapToX == false) && (snapToY == false)) return -1;
+
         for (var i = 0; i < this.controlPoints.length / 3; ++i) {
             if (selectedIsCurrent && currentHandle == i) continue;
 
             var deltaX = x - this.controlPoints[3 * i + 0];
             var deltaY = y - this.controlPoints[3 * i + 1];
-            var distSqrd = deltaX * deltaX + deltaY * deltaY;
-            if (distSqrd * .9 < (this.handleRadius * this.handleRadius))
+
+            if (snapToX && !snapToY) {
+                if (Math.abs(deltaX) * .9 < (this.handleRadius))
                 return i;
+            }
+
+            else if (snapToY && !snapToX) {
+                if (Math.abs(deltaY) * .9 < (this.handleRadius))
+                return i;
+            }
+            
+            else {
+                var distSqrd = deltaX * deltaX + deltaY * deltaY;
+                if (distSqrd * .9 < (this.handleRadius * this.handleRadius))
+                return i;
+            }
         }
         return -1;
     }
@@ -1082,7 +1097,7 @@ class Curve {
 
         gl.uniform1f(
             Curve.LineProgramInfo.uniformLocations.thickness,
-            this.handleThickness);
+            this.handleThickness * .5);
 
         gl.uniform1f(
             Curve.LineProgramInfo.uniformLocations.aspect,
@@ -1092,9 +1107,10 @@ class Curve {
             Curve.LineProgramInfo.uniformLocations.miter,
             1);
 
+        
         gl.uniform4fv(
             Curve.LineProgramInfo.uniformLocations.color,
-            this.selected ? this.selectedColor : this.deselectedColor);
+            this.selected ? [-0.4, -0.4, -0.4, 0] : [-0.7, -0.7, -0.7, 0.0]);
 
         {
             const vertexCount = (this.controlPoints.length / 3) * 2;

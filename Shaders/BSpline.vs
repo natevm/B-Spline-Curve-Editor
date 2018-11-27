@@ -123,7 +123,7 @@ void main(void) {
     gl_PointSize = 1.0;
 
     normal = normalize(normal);
-    vColor = vec4(abs(normal.x), abs(normal.y), 0.0, 1.0);
+    vColor = vec4(1.0, 1.0, 1.0, 1.0);//vec4(abs(normal.x), abs(normal.y), 0.0, 1.0);
     // vColor = vec4(1.0, 1.0, 1.0, 1.0);
     // vOffset = offset;
 }

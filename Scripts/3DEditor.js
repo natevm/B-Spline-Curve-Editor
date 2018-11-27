@@ -263,6 +263,7 @@ angular
 
                 }
                 reader.readAsText(selectedFile);
+                document.getElementById("UploadBSplineFile").value = ""
             });
 
             curveEditor = new CurveEditor();

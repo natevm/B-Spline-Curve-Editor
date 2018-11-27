@@ -78,16 +78,16 @@
                                 Edit
                             </button>
                             <md-menu-content>
-                                <!-- <md-menu-item class="md-indent">
+                                <md-menu-item class="md-indent">
                                     <md-icon md-svg-icon="undo"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('undo', $event)">
+                                    <md-button ng-click="undo($event)">
                                         Undo
                                         <span class="md-alt-text">{{ 'M-Z' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-item class="md-indent">
                                     <md-icon md-svg-icon="redo"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('redo', $event)">
+                                    <md-button ng-click="redo($event)">
                                         Redo
                                         <span class="md-alt-text">{{ 'M-Y' | keyboardShortcut }}</span>
                                     </md-button>
@@ -95,42 +95,42 @@
                                 <md-menu-divider></md-menu-divider>
                                 <md-menu-item class="md-indent">
                                     <md-icon md-svg-icon="content-cut"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('cut', $event)">
+                                    <md-button ng-click="cut($event)">
                                         Cut
                                         <span class="md-alt-text">{{ 'M-X' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-item class="md-indent">
                                     <md-icon md-svg-icon="content-copy"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('copy', $event)">
+                                    <md-button ng-click="copy($event)">
                                         Copy
                                         <span class="md-alt-text">{{ 'M-C' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-item class="md-indent">
                                     <md-icon md-svg-icon="content-paste"></md-icon>
-                                    <md-button disabled="disabled" ng-click="sampleAction('paste', $event)">
+                                    <md-button ng-click="paste($event)">
                                         Paste
-                                        <span class="md-alt-text">{{ 'M-P' | keyboardShortcut }}</span>
+                                        <span class="md-alt-text">{{ 'M-V' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
-                                <md-menu-divider></md-menu-divider> -->
+                                <md-menu-divider></md-menu-divider>
                                 <md-menu-item class="md-indent">
                                     <md-button ng-click="addCurve($event)">
                                         Add Curve
-                                        <!-- <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span> -->
+                                        <span class="md-alt-text">{{ 'N' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-item class="md-indent">
                                     <md-button ng-click="deleteCurve($event)">
                                         Delete Curve
-                                        <!-- <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span> -->
+                                        <span class="md-alt-text">{{ 'Del' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-item class="md-indent">
                                     <md-button ng-click="deleteLastHandle($event)">
                                         Delete Last Handle
-                                        <!-- <span class="md-alt-text">{{ 'M-S-H' | keyboardShortcut }}</span> -->
+                                        <span class="md-alt-text">{{ 'Tap & Hold' | keyboardShortcut }}</span>
                                     </md-button>
                                 </md-menu-item>
                                 <md-menu-divider></md-menu-divider>
@@ -145,8 +145,19 @@
                                             value="closest">Add to Closest</md-menu-item>
                                     </md-menu-content>
                                 </md-menu>
-                                <md-menu-item type="checkbox" ng-model="settings.snappingEnabled" ng-click="updateSnapping($event)">Snapping
-                                    Enabled</md-menu-item>
+                                <md-menu>
+                                    <md-button class="button-override" ng-click="$mdMenu.open()">Edit Mode</md-button>
+                                    <md-menu-content width="3">
+                                        <md-menu-item type="radio" ng-model="settings.editMode" ng-click="updateEditMode($event)"
+                                            value="edit">Edit control points</md-menu-item>
+                                        <md-menu-item type="radio" ng-model="settings.editMode" ng-click="updateEditMode($event)"
+                                            value="transform">Transform curve</md-menu-item>
+                                    </md-menu-content>
+                                </md-menu>
+                                <md-menu-divider></md-menu-divider>
+                                <md-menu-item type="checkbox" ng-model="settings.snapping" ng-click="updateSnapping($event)">Enable snapping</md-menu-item>
+                                <md-menu-item type="checkbox" ng-model="settings.snapToXEnabled" ng-click="updateSnapToX($event)">Snap to X</md-menu-item>
+                                <md-menu-item type="checkbox" ng-model="settings.snapToYEnabled" ng-click="updateSnapToY($event)">Snap to Y</md-menu-item>
                             </md-menu-content>
                         </md-menu>
                         <md-menu>

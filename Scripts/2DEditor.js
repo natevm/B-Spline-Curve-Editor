@@ -68,9 +68,12 @@ angular
             minzoom: 1,
             maxzoom: 1000,
             zoom: 400,
-            snappingEnabled: true,
+            snapping: true,
+            snapToXEnabled: true,
+            snapToYEnabled: true,
             fullScreen: false,
             insertionMode: 'back',
+            editMode: 'edit',
             designName: (localStorage.getItem("design_name") == undefined) ? "Untitled design" : localStorage.getItem("design_name")
         };
 
@@ -192,7 +195,7 @@ angular
                         numPoints = parseInt(lines[0])
                         lines = lines.splice(1)
 
-                        console.log("new curve")
+                        // console.log("new curve")
 
                         /* Parse control points */
                         curves[i].controlPoints = []
@@ -203,7 +206,7 @@ angular
                             assert(strArray.length == 2);
                             var x = parseFloat(strArray[0])
                             var y = parseFloat(strArray[1])
-                            console.log("x: " + x + " y: " + y);
+                            // console.log("x: " + x + " y: " + y);
                             lines = lines.splice(1)
                             if (numPoints < 100 || j % 2 == 0) {
                                 curves[i].controlPoints.push(x, -y, 0.0)
@@ -231,6 +234,9 @@ angular
                             for (var j = 0; j < strArray.length; ++j) {
                                 knot.push(parseFloat(strArray[j]));
                             }
+
+                            assert(knot.length == ((degree + 1) + (curves[i].controlPoints.length / 3) ))
+
                             /* normalize the knot */
                             var min = knot[0];
                             var max = knot[knot.length - 1];
@@ -254,6 +260,7 @@ angular
                     curveEditor.backup();
                 }
                 reader.readAsText(selectedFile);
+                document.getElementById("UploadBSplineFile").value = ""
             });
 
             curveEditor = new CurveEditor();
@@ -272,15 +279,148 @@ angular
             );
         };
 
-        $scope.updateSnapping = function (ev) {
-            curveEditor.setSnappingMode($scope.settings.snappingEnabled);
+        $scope.undo = function (ev) {
+            /* move up undo stack */
+            if (curveEditor.undo() == false) {
+                $mdToast.show(
+                    $mdToast.simple()
+                        .textContent('Error: cannot undo further.')
+                        .position('bottom right')
+                        .hideDelay(3000)
+                );
+            } else {
+                $mdToast.show(
+                    $mdToast.simple()
+                        .textContent('Undo')
+                        .position('bottom right')
+                        .hideDelay(3000)
+                );
+            }
+        };
+
+        $scope.redo = function (ev) {
+            /* move down undo stack */
+            if (curveEditor.redo() == false) {
+                $mdToast.show(
+                    $mdToast.simple()
+                    .textContent('Error: cannot redo further')
+                    .position('bottom right')
+                    .hideDelay(3000)
+                );
+            }
+            else {
+                $mdToast.show(
+                    $mdToast.simple()
+                    .textContent('Redo')
+                    .position('bottom right')
+                    .hideDelay(3000)
+                );
+            }
+        };
+
+        $scope.cut = function (ev) {
+            /* If no curve selected, toast error */
+            if (curveEditor.getSelectedCurve() == -1) {
+                $mdToast.show(
+                    $mdToast.simple()
+                        .textContent('Error: no curve selected.')
+                        .position('bottom right')
+                        .hideDelay(3000)
+                );
+                return;
+            }
+            
+            /* else copy selected curve */
+            curveEditor.copySelectedCurve();
+
+            /* then, delete selected curve */
+            curveEditor.deleteLastCurve();
+
             $mdToast.show(
                 $mdToast.simple()
-                    .textContent('Snapping ' + ($scope.settings.snappingEnabled) ? "enabled" : "disabled" + '.')
+                    .textContent('Curve cut')
+                    .position('bottom right')
+                    .hideDelay(3000)
+            );
+        };
+
+        $scope.copy = function (ev) {
+            /* If no curve selected, toast error */
+            if (curveEditor.getSelectedCurve() == -1) {
+                $mdToast.show(
+                    $mdToast.simple()
+                        .textContent('Error: no curve selected.')
+                        .position('bottom right')
+                        .hideDelay(3000)
+                );
+                return;
+            }
+            
+            /* else copy selected curve */
+            curveEditor.copySelectedCurve();
+
+            $mdToast.show(
+                $mdToast.simple()
+                    .textContent('Curve copied')
+                    .position('bottom right')
+                    .hideDelay(3000)
+            );
+        };
+
+        $scope.paste = function (ev) {
+            /* If no curve copied, toast error */
+            if (curveEditor.getCopiedCurve() == -1) {
+                $mdToast.show(
+                    $mdToast.simple()
+                        .textContent('Error: cut or copy a curve first.')
+                        .position('bottom right')
+                        .hideDelay(3000)
+                );
+                return;
+            }
+            
+            /* else paste copied curve */
+            curveEditor.pasteCurve();
+
+            $mdToast.show(
+                $mdToast.simple()
+                    .textContent('Curve pasted')
+                    .position('bottom right')
+                    .hideDelay(3000)
+            );
+        };
+
+        $scope.updateSnapping = function (ev) {
+            curveEditor.setSnappingMode($scope.settings.snapping);
+            $mdToast.show(
+                $mdToast.simple()
+                    .textContent("Snapping " + (($scope.settings.snapping) ? "enabled" : "disabled") + ".")
                     .position('bottom right')
                     .hideDelay(3000)
             );
         }
+
+        $scope.updateSnapToX = function (ev) {
+            curveEditor.setSnapToXMode($scope.settings.snapToXEnabled);
+            $mdToast.show(
+                $mdToast.simple()
+                    .textContent("Snapping to X " + (($scope.settings.snapToXEnabled) ? "enabled" : "disabled") + ".")
+                    .position('bottom right')
+                    .hideDelay(3000)
+            );
+        }
+
+        $scope.updateSnapToY = function (ev) {
+            curveEditor.setSnapToYMode($scope.settings.snapToYEnabled);
+            $mdToast.show(
+                $mdToast.simple()
+                    .textContent("Snapping to Y " + (($scope.settings.snapToYEnabled) ? "enabled" : "disabled") + ".")
+                    .position('bottom right')
+                    .hideDelay(3000)
+            );
+        }
+
+        
 
         $scope.updateVisibility = function (ev) {
             curveEditor.setControlPolygonVisibility($scope.settings.showControlPolygon);
@@ -349,6 +489,18 @@ angular
             $mdToast.show(
                 $mdToast.simple()
                     .textContent('Insertion mode updated.')
+                    .position('bottom right')
+                    .hideDelay(3000)
+            );
+        }
+
+        $scope.updateEditMode = function (ev) {
+            console.log($scope.settings.editMode)
+            curveEditor.setEditMode($scope.settings.editMode);
+            
+            $mdToast.show(
+                $mdToast.simple()
+                    .textContent('Edit mode updated.')
                     .position('bottom right')
                     .hideDelay(3000)
             );
@@ -437,7 +589,7 @@ angular
                 text += "# Control point data: \n";
                 for (var j = 0; j < curveEditor.curves[i].getNumCtlPoints(); ++j) {
                     text += curveEditor.curves[i].controlPoints[j * 3 + 0] + "    ";
-                    text += curveEditor.curves[i].controlPoints[j * 3 + 1] * -1.0 + "\n"
+                    text += curveEditor.curves[i].controlPoints[j * 3 + 1] * -1.0 + "    \n"
                 }
                 text += "# Knot present: \n";
                 text += "1 \n";
@@ -580,7 +732,6 @@ angular
             knotEditor.initializeWebGL();
             knotEditor.setCurve($scope.data.curve);
             knotEditor.updateBasisFunctions();
-            curveEditor.backup();
         });
         $scope.listItemClick = function () {
         };
@@ -593,7 +744,7 @@ angular
             $scope.data.curve.setDegree($scope.data.degree);
             // knotEditor.generateUniformFloatingKnotVector();
             knotEditor.updateBasisFunctions();
-            curveEditor.backup();
+            // curveEditor.backup();
         }
         $scope.increaseDegree = function () {
             if ($scope.data.degree >= 8) {
@@ -633,6 +784,7 @@ angular
                 }
                 $scope.updateDegree();
             }
+            
 
         }
         $scope.decreaseDegree = function () {

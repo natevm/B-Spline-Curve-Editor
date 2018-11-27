@@ -5,6 +5,7 @@ class CurveEditor {
         this.pointJustAdded = false;
         this.selectedCurve = -1;
         this.selectedHandle = -1;
+        this.copiedCurveID = -1;
         this.showCurves = true;
         this.showControlPolygons = true;
         this.showControlHandles = true;
@@ -19,12 +20,19 @@ class CurveEditor {
         this.addToFront = false;
         this.addToBack = true;
         this.addToClosest = false;
-        this.snappingEnabled = true;
+        this.snapping = true;
+        this.snapToX = true;
+        this.snapToY = true;
         this.zooming = false;
         this.panning = false;
         this.mousedown = false;
         this.touchstart = false;
         this.doubletapped = false;
+        this.editEnabled = true;
+        this.transformEnabled = false;
+        this.copy = {};
+        this.undoStack = [];
+        this.undoState = -1;
 
         // If we don't have a GL context, give up now  
         if (!this.gl) {
@@ -45,6 +53,8 @@ class CurveEditor {
             for (var i = 0; i < curveObjs.length; ++i) {
                 this.curves.push(new Curve(0, 0, curveObjs[i]));
             }
+            this.backup();
+
         } else {
             for (let i = 0; i < 1; ++i) {
                 this.curves.push(new Curve());
@@ -53,8 +63,8 @@ class CurveEditor {
                     this.curves[i].addHandle((this.canvas.clientWidth / 4.0) * (2.0 * Math.random() - 1.0), (this.canvas.clientHeight / 4.0) * (2.0 * Math.random() - 1.0))
                 }
             }
-
             this.backup();
+
         }
 
         // if (this.curves.length > 0)
@@ -141,14 +151,17 @@ class CurveEditor {
         document.onkeyup = (e) => {
             if (!this.shortcutsEnabled) return;
 
-            if (e.keyCode == 67) this.hideCurves();
-            if (e.keyCode == 76) this.hideControlPolygons();
-            if (e.keyCode == 80) this.hideControlHandles();
+            // if (e.keyCode == 67) this.hideCurves();
+            // if (e.keyCode == 76) this.hideControlPolygons();
+            // if (e.keyCode == 80) this.hideControlHandles();
             if (e.keyCode == 65) this.addHandle();
-            if (e.keyCode == 46) this.deleteLastHandle();
+            if (e.keyCode == 46) this.deleteLastCurve();
             if (e.keyCode == 78) this.newCurve();
-
-            this.backup();
+            if ((e.keyCode == 90) && (e.ctrlKey)) this.undo();
+            if ((e.keyCode == 89) && (e.ctrlKey)) this.redo();
+            if ((e.keyCode == 88) && (e.ctrlKey)) { this.copySelectedCurve(); this.deleteLastCurve();}
+            if ((e.keyCode == 67) && (e.ctrlKey)) { this.copySelectedCurve();}
+            if ((e.keyCode == 86) && (e.ctrlKey)) { this.pasteCurve();}
         };
 
         /* Prevent right clicking the webgl canvas */
@@ -180,6 +193,15 @@ class CurveEditor {
     backup() {
         let json = JSON.stringify(this.curves);
         localStorage.setItem("curves", json)
+        
+        /* if the undo state isn't at the end of the undo stack */
+        if (this.undoState != (this.undoStack.length - 1)) {
+            /* Clear all values after the current state */
+            this.undoStack.splice(this.undoState + 1, this.undoStack.length - (this.undoState + 1) );
+        }
+
+        this.undoState += 1;
+        this.undoStack.push(json);
     }
 
     /* Changes the webgl viewport to account for screen resizes */
@@ -250,8 +272,11 @@ class CurveEditor {
             }
         }
 
-        if (this.selectedHandle == -1) {
-            this.originalPosition = { x: this.position.x, y: this.position.y };
+        this.originalPosition = { x: this.position.x, y: this.position.y };
+        if (this.selectedHandle != -1) {
+            if (this.transformEnabled) {
+                this.controlPointsCopy = this.curves[this.selectedCurve].controlPoints.slice();
+            }
         }
     }
 
@@ -266,10 +291,11 @@ class CurveEditor {
             /* If snapping is on, see if we can place this point over another */
             var handleUnderneath = -1;
             var otherHandlePos = [0.0, 0.0, 0.0];
-            if (this.snappingEnabled) {
+            if (this.snapping) {
                 for (var j = 0; j < this.curves.length; ++j) {
-                    var ctl_idx = this.curves[j].getSnapPosition(x - this.position.x, y - this.position.y, this.selectedCurve == j, this.selectedHandle);
-                    if ((ctl_idx != -1) && !((j == this.selectedCurve) && (ctl_idx == this.selectedHandle))) {
+                    var ctl_idx = this.curves[j].getSnapPosition(x - this.position.x, y - this.position.y, this.selectedCurve == j, this.selectedHandle, this.snapToX, this.snapToY);
+                    if ((ctl_idx != -1) && !(((j == this.selectedCurve)) && (ctl_idx == this.selectedHandle))) {
+                        if ((j == this.selectedCurve) && this.transformEnabled) continue; 
                         handleUnderneath = ctl_idx;
                         otherHandlePos = this.curves[j].getHandlePos(handleUnderneath);
                         break;
@@ -278,26 +304,51 @@ class CurveEditor {
             }
 
             if (handleUnderneath != -1) {
-                this.curves[this.selectedCurve].moveHandle(this.selectedHandle, otherHandlePos[0], otherHandlePos[1]);
+                if (this.editEnabled){
+                    this.curves[this.selectedCurve].moveHandle(this.selectedHandle, (this.snapToX ? otherHandlePos[0] : x - this.position.x), (this.snapToY ? otherHandlePos[1] : y - this.position.y));
+                }
+                if (this.transformEnabled) {
+                    let transformedPts = this.controlPointsCopy.slice();
+                    let dx = this.controlPointsCopy[this.selectedHandle * 3 + 0] - (this.snapToX ? otherHandlePos[0] : x - this.position.x);
+                    let dy = this.controlPointsCopy[this.selectedHandle * 3 + 1] - (this.snapToY ? otherHandlePos[1] : y - this.position.y);
+                    for (var i = 0; i < transformedPts.length / 3; ++i) {
+                        transformedPts[i * 3 + 0] = this.controlPointsCopy[i * 3 + 0] - dx;
+                        transformedPts[i * 3 + 1] = this.controlPointsCopy[i * 3 + 1] - dy;
+                    }
+                    this.curves[this.selectedCurve].controlPoints = transformedPts;
+                }
             }
             else {
-                this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
-                    x - this.position.x,
-                    y - this.position.y);
+                if (this.editEnabled)
+                {
+                    this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
+                    Math.round(100 * (x - this.position.x))/100,
+                    Math.round(100 *(y - this.position.y))/100 );
+                }
+                if (this.transformEnabled) {
+                    let transformedPts = this.controlPointsCopy.slice();
+                    for (var i = 0; i < transformedPts.length / 3; ++i) {
+                        transformedPts[i * 3 + 0] = Math.round(100 * (this.controlPointsCopy[i * 3 + 0] + deltax))/100; //+ Math.round(100 * ((x - this.originalPosition.x) - this.position.x))/100;
+                        transformedPts[i * 3 + 1] = Math.round(100 * (this.controlPointsCopy[i * 3 + 1] + deltay))/100;// + Math.round(100 * ((y - this.originalPosition.y) - this.position.x))/100;
+                    }
+                    this.curves[this.selectedCurve].controlPoints = transformedPts;
+                }
             }
         }
     }
 
     panEnd() {
+        
         this.panning = false;
         if (this.selectedHandle == -1) {
             this.originalPosition = this.position;
         }
+        else this.backup();
 
-        this.backup();
     }
 
     press(x, y) {
+        if (!this.editEnabled) return;
         var deleting = false;
         console.log("pressing")
         if (this.selectedCurve != -1) {
@@ -330,10 +381,12 @@ class CurveEditor {
                                 x - this.position.x,
                                 y - this.position.y, this.addToFront, this.addToBack, this.addToClosest);
                             this.selectedHandle = (this.curves[this.selectedCurve].controlPoints.length / 3) - 1;
+                            this.backup();
                         } else {
                             this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
                                 x - this.position.x,
                                 y - this.position.y);
+                            this.backup();
                         }
                         this.pointJustAdded = true;
                     }
@@ -343,7 +396,6 @@ class CurveEditor {
                         return;
                     }
                 }
-                this.backup();
             }
 
         }, deleting ? 600 : 400);
@@ -351,8 +403,17 @@ class CurveEditor {
     }
 
     setSnappingMode(enabled) {
-        this.snappingEnabled = enabled;
+        this.snapping = enabled;
     }
+    
+    setSnapToXMode(enabled) {
+        this.snapToX = enabled;
+    }
+    
+    setSnapToYMode(enabled) {
+        this.snapToY = enabled;
+    }
+    
 
     setAddMode(addToFront, addToBack, addToClosest) {
         this.addToFront = addToFront;
@@ -360,11 +421,17 @@ class CurveEditor {
         this.addToClosest = addToClosest;
     }
 
+    setEditMode(mode) {
+        this.transformEnabled = (mode == "transform") ;
+        this.editEnabled = (mode == "edit") ;
+    }
+
     pressUp() {
         this.pointJustAdded = false;
     }
 
     doubleTap(x, y) {
+        if (!this.editEnabled) return;
         console.log("doubletap")
         this.doubletapped = true;
         if (this.selectedCurve == -1) {
@@ -382,7 +449,7 @@ class CurveEditor {
                 }
             }
         } else {
-            var ctl_idx = this.curves[this.selectedCurve].getClickedHandle(
+            var ctl_idx = this.curves[this.selectedCurve].getClickedHandle (
                 x - this.position.x,
                 y - this.position.y)
             if (ctl_idx != -1) {
@@ -402,10 +469,12 @@ class CurveEditor {
                                     x - this.position.x,
                                     y - this.position.y, this.addToFront, this.addToBack, this.addToClosest);
                                 this.selectedHandle = (this.curves[this.selectedCurve].controlPoints.length / 3) - 1;
+                                this.backup();
                             } else {
                                 this.curves[this.selectedCurve].moveHandle(this.selectedHandle,
                                     x - this.position.x,
                                     y - this.position.y);
+                                this.backup();
                             }
                             this.pointJustAdded = true;
                         }
@@ -415,13 +484,10 @@ class CurveEditor {
                             return;
                         }
                     }
-                    this.backup();
                 }
                 this.pressUp();
             }
         }
-
-        this.backup();
     }
 
     /* Draws the curves to the screen */
@@ -452,7 +518,7 @@ class CurveEditor {
 
         /* Resize lines */
         for (let i = 0; i < this.curves.length; ++i) {
-            this.curves[i].handleRadius = 30 / this.zoom;
+            this.curves[i].handleRadius = 15 / this.zoom;
             this.curves[i].handleThickness = .005;//5 / this.zoom;
             this.curves[i].thickness = .005;//5 / this.zoom;
         }
@@ -493,17 +559,17 @@ class CurveEditor {
                 this.curves[this.selectedCurve].removeHandle(this.selectedHandle);
                 this.selectedHandle = -1;
             }
+            this.backup();
         }
 
-        this.backup();
     }
 
     addHandle() {
         if (this.selectedCurve != -1) {
             this.curves[this.selectedCurve].addHandle(-this.position.x / this.zoom, -this.position.y / this.zoom);
+            this.backup();
         }
 
-        this.backup();
     }
 
     /* Deletes the last modified curve */
@@ -512,9 +578,8 @@ class CurveEditor {
             this.curves.splice(this.selectedCurve, 1);
             this.selectedCurve = -1;
             this.selectedHandle = -1;
+            this.backup();
         }
-
-        this.backup();
     }
 
     deleteAll() {
@@ -566,6 +631,69 @@ class CurveEditor {
         else {
             return this.curves[this.selectedCurve];
         }
+    }
+
+    copySelectedCurve() {
+        if (this.selectedCurve == -1) return;
+        this.copiedCurveID = this.selectedCurve;
+
+        this.copy.controlPoints = this.curves[this.copiedCurveID].controlPoints.slice();
+        this.copy.isOpen = this.curves[this.copiedCurveID].isOpen;
+        this.copy.isUniform = this.curves[this.copiedCurveID].isUniform;
+        this.copy.degree = this.curves[this.copiedCurveID].degree;
+        this.copy.knot_vector = this.curves[this.copiedCurveID].knot_vector.slice();
+    }
+
+    getCopiedCurve() {
+        return this.copiedCurveID;
+    }
+
+    pasteCurve() {
+        if (this.copiedCurveID == -1) return;
+        this.curves.push(new Curve(0, 0, this.copy));
+        this.backup();
+    }
+
+    undo() {
+        if (this.undoState > 0) {
+            this.undoState -= 1;
+
+            /* Delete all existing curves */
+            this.curves = [];
+            this.selectedCurve = -1;
+            this.selectedHandle = -1;
+
+            /* Replace with last undo state */
+            if (this.undoStack[this.undoState]) {
+                let curveObjs = JSON.parse(this.undoStack[this.undoState]);
+                for (var i = 0; i < curveObjs.length; ++i) {
+                    this.curves.push(new Curve(0, 0, curveObjs[i]));
+                }
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    redo() {
+        if (this.undoState < (this.undoStack.length - 1)) {
+            this.undoState += 1;
+
+            this.curves = [];
+            this.selectedCurve = -1;
+            this.selectedHandle = -1;
+
+            if (this.undoStack[this.undoState]) {
+                let curveObjs = JSON.parse(this.undoStack[this.undoState]);
+                for (var i = 0; i < curveObjs.length; ++i) {
+                    this.curves.push(new Curve(0, 0, curveObjs[i]));
+                }
+            }
+
+            return true;
+        }
+        return false;
     }
 }
 
