@@ -1,4 +1,4 @@
 # B-Spline-Curve-Editor
 An online tool to edit B Splines written in WebGL
 
-![Image of Editor](bsplineeditorthumb.png)
+[<img src="./bsplineeditorthumb.png">](http://n8vm.github.io/B-Spline-Curve-Editor/)
